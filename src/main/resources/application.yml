@@ -9,12 +9,22 @@ spring:
       ddl-auto: update
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
-    show-sql: true
-    properties:
-      hibernate:
+#    show-sql: true
+#    properties:
+#      hibernate:
 #        format_sql: true
 #  profiles:
 #    active: h2
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql: TRACE
+    com.taskhub.project.aspect.LoggingAspect: DEBUG
 
 springdoc:
   swagger-ui:
