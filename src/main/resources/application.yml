@@ -16,6 +16,19 @@ spring:
 #  profiles:
 #    active: h2
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: username
+    password: password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
 logging:
   level:
     org:
@@ -29,3 +42,19 @@ logging:
 springdoc:
   swagger-ui:
     path: /swagger
+    csrf:
+      enabled: true
+
+server:
+  port: 8080
+
+app:
+  base-uri: http://localhost:8080/
+  name: task-hub
+  jwt-secret: 413F4428472B4B6250645367566B5970337336763979244226452948404D6351
+  #  jwt-expiration-ms: 60000 #1 min
+  #  jwt-refresh-expiration-ms: 120000 #2 min
+  jwt-expiration-ms: 3600000
+  jwt-refresh-expiration-ms: 86400000
+  jwt-alg: HS256 #RSA #HS256
+  rsa-key-length: 2048
