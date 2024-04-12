@@ -19,8 +19,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: username
-    password: password
+    username: nviethung0902@gmail.com
+    password: nwspwvnmwkpoltyz
     properties:
       mail:
         smtp:
@@ -38,6 +38,7 @@ logging:
           descriptor:
             sql: TRACE
     com.taskhub.project.aspect.LoggingAspect: DEBUG
+#    root: debug
 
 springdoc:
   swagger-ui:

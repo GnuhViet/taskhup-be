@@ -52,15 +52,15 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             JWTService.DecodedToken decodedToken = jwtService.decodeToken(token);
-            if (decodedToken.getUserId() == null || decodedToken.getRoles() == null) {
+            if (decodedToken.getUserId() == null) {
                 filterChain.doFilter(request, response);
                 return;
             }
 
             Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            Arrays.stream(decodedToken.getRoles()).forEach(role -> {
-                authorities.add(new SimpleGrantedAuthority(role));
-            });
+            // Arrays.stream(decodedToken.getRoles()).forEach(role -> {
+            //     authorities.add(new SimpleGrantedAuthority(role));
+            // });
             Authentication authenticationToken = new UsernamePasswordAuthenticationToken(decodedToken.getUserId(), null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         } catch (Exception e) {

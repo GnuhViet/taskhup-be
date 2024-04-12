@@ -58,26 +58,26 @@ public class JWTService {
     @Getter
     public static class DecodedToken {
         private final String userId;
-        private final String[] roles;
+        // private final String[] roles;
         private final Date expiration;
         private final String issuer;
         private final Date issuerAt;
 
         private DecodedToken(Claims claims) throws MalformedJwtException {
 
-            @SuppressWarnings("unchecked")
-            var rawRoles = (List<String>) claims.get("roles");
+            // @SuppressWarnings("unchecked")
+            // var rawRoles = (List<String>) claims.get("roles");
 
             userId = claims.getSubject();
             expiration = claims.getExpiration();
             issuer = claims.getIssuer();
             issuerAt = claims.getIssuedAt();
 
-            if (rawRoles != null) {
-                roles = rawRoles.toArray(new String[0]);
-            } else {
-                roles = null;
-            }
+            // if (rawRoles != null) {
+            //     roles = rawRoles.toArray(new String[0]);
+            // } else {
+            //     roles = null;
+            // }
         }
     }
 

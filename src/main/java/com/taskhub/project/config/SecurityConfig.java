@@ -13,6 +13,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +32,8 @@ public class SecurityConfig {
     private static final String[] AUTH_WHITELIST = {
             // auth
             "/api/v1/auth/**",
+            // websocket pre flight
+            "/ws-endpoint/**",
             // custom path
             "/swagger",
             // for Swagger UI v2
@@ -44,10 +53,17 @@ public class SecurityConfig {
     @Bean
     protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        http.csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-        );
+        // http.csrf(csrf -> csrf
+        //         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+        //         .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+        // );
+
+        http.csrf(csrf-> csrf.disable());
+
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+        // allow http://localhost:5173/ to access the API
+        // http.cors(cors -> cors.disable());
 
         // http.csrf(AbstractHttpConfigurer::disable);
 
@@ -69,5 +85,15 @@ public class SecurityConfig {
         return http.build();
     }
 
-
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173/")); // Replace "*" with your specific origin
+        configuration.setAllowedMethods(Arrays.asList("GET","POST", "PUT", "DELETE")); // Or add your specific methods
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }
