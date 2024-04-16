@@ -1,5 +1,6 @@
 package com.taskhub.project.core.board.domain;
 
+import com.taskhub.project.core.workspace.domain.WorkSpace;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,7 +23,13 @@ public class Board {
     private String createBy;
     private String createDate;
 
-    private String memberIds;
+    // @ManyToMany(fetch = FetchType.LAZY)
+    // @JoinTable(
+    //         name = "board_member",
+    //         joinColumns = @JoinColumn(name = "board_id"),
+    //         inverseJoinColumns = @JoinColumn(name = "user_id")
+    // )
+    // private Set<AppUser> appUsers;
 
     @Column(columnDefinition = "TEXT")
     private String columnOrderIds;

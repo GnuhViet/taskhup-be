@@ -3,6 +3,7 @@ package com.taskhub.project.core.authentication;
 import com.taskhub.project.core.authentication.dtos.DetailsAppUserDTO;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,13 +66,16 @@ public class JWTService {
 
         private DecodedToken(Claims claims) throws MalformedJwtException {
 
-            // @SuppressWarnings("unchecked")
-            // var rawRoles = (List<String>) claims.get("roles");
+            @SuppressWarnings("unchecked")
+            var rawRoles = (RoleDetails) claims.get("roleDetails");
 
             userId = claims.getSubject();
             expiration = claims.getExpiration();
             issuer = claims.getIssuer();
             issuerAt = claims.getIssuedAt();
+
+            // logic for roles
+
 
             // if (rawRoles != null) {
             //     roles = rawRoles.toArray(new String[0]);
@@ -79,6 +83,13 @@ public class JWTService {
             //     roles = null;
             // }
         }
+    }
+
+    @Data
+    public static class RoleDetails {
+        private final String boardId;
+        private final String roleId;
+        private final List<String> action;
     }
 
     public DecodedToken decodeToken(String token) throws MalformedJwtException{
@@ -155,6 +166,17 @@ public class JWTService {
 
     public String generateRefreshToken(DetailsAppUserDTO user) {
         return generateToken(user.getId(), Collections.emptyMap(), TokenType.refresh);
+    }
+
+    public String generateBoardToken(
+            String userId,
+            RoleDetails roleDetails
+    ) {
+        return generateToken(
+                userId,
+                Map.of("roleDetails", roleDetails),
+                TokenType.access
+        );
     }
 
     public String generateToken(

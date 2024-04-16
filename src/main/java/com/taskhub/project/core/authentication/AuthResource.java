@@ -1,9 +1,6 @@
 package com.taskhub.project.core.authentication;
 
-import com.taskhub.project.core.authentication.model.AuthenticationRequest;
-import com.taskhub.project.core.authentication.model.AuthenticationResponse;
-import com.taskhub.project.core.authentication.model.RefreshRequest;
-import com.taskhub.project.core.authentication.model.RegisteredRequest;
+import com.taskhub.project.core.authentication.model.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +28,14 @@ public class AuthResource {
     @Operation(summary = "login , Role: All")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         return ResponseEntity.ok(authService.authenticate(request));
+    }
+
+    @PostMapping("/author-board")
+    @Operation(summary = "Author board, Role: All")
+    public ResponseEntity<?> authorBoard(@RequestBody BoardAuthorRequest request) {
+        var response = authService.authorBoard(request);
+
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/refresh")

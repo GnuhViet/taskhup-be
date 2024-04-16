@@ -20,7 +20,7 @@ public class BoardApi {
     @GetMapping
     public ResponseEntity<ServiceResult<?>> getAllBoard() {
         var response = boardService.getAllBoard();
-        return new ResponseEntity<>(response, response.getStatus());
+        return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
     @Operation(summary = "Single user info, Role: Admin", security = @SecurityRequirement(name = "bearerAuth"))
@@ -29,6 +29,7 @@ public class BoardApi {
         return boardService.getBoard(boardId);
     }
 
+    @Operation(summary = "Single user info, Role: Admin", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping
     public BoardDto createBoard(@RequestBody BoardDto boardDto) {
         return boardService.createBoard(boardDto);

@@ -2,6 +2,7 @@ package com.taskhub.project.config;
 
 import com.taskhub.project.filter.JWTAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -20,34 +21,50 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
-@RequiredArgsConstructor
 public class SecurityConfig {
     private final JWTAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
 
-    private static final String[] AUTH_WHITELIST = {
-            // auth
-            "/api/v1/auth/**",
-            // websocket pre flight
-            "/ws-endpoint/**",
-            // custom path
-            "/swagger",
-            // for Swagger UI v2
-            "/v2/api-docs",
-            "/swagger-ui.html",
-            "/swagger-resources",
-            "/swagger-resources/**",
-            "/configuration/ui",
-            "/configuration/security",
-            "/webjars/**",
-            // for Swagger UI v3 (OpenAPI)
-            "/v3/api-docs/**",
-            "/swagger-ui/**"
-    };
+    private final String[] AUTH_WHITELIST;
+    private final String[] AUTH_LIST;
+
+    public SecurityConfig(
+            @Value("${app.auth.white-list}") String[] AUTH_WHITELIST,
+            @Value("${app.auth.auth-list}") String[] AUTH_LIST,
+            JWTAuthenticationFilter jwtAuthFilter,
+            AuthenticationProvider authenticationProvider
+    ) {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.authenticationProvider = authenticationProvider;
+
+        this.AUTH_LIST = AUTH_LIST;
+        this.AUTH_WHITELIST = AUTH_WHITELIST;
+    }
+
+    //         = {
+    //         // auth
+    //         "/api/v1/auth/**",
+    //         // websocket pre flight
+    //         "/ws-endpoint/**",
+    //         // custom path
+    //         "/swagger",
+    //         // for Swagger UI v2
+    //         "/v2/api-docs",
+    //         "/swagger-ui.html",
+    //         "/swagger-resources",
+    //         "/swagger-resources/**",
+    //         "/configuration/ui",
+    //         "/configuration/security",
+    //         "/webjars/**",
+    //         // for Swagger UI v3 (OpenAPI)
+    //         "/v3/api-docs/**",
+    //         "/swagger-ui/**"
+    // };
 
 
     @Bean
@@ -69,6 +86,7 @@ public class SecurityConfig {
 
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(AUTH_WHITELIST).permitAll()
+                .requestMatchers(AUTH_LIST).authenticated()
                 .requestMatchers("/api/v1/auth/email/validate").authenticated()
                 .requestMatchers("/api/v1/auth/email/confirm").authenticated()
                 .anyRequest().authenticated()

@@ -5,7 +5,7 @@ import com.taskhub.project.core.board.domain.BoardCard;
 import com.taskhub.project.core.board.domain.BoardColumn;
 import com.taskhub.project.core.board.dto.BoardCardDto;
 import com.taskhub.project.core.board.dto.BoardDto;
-import com.taskhub.project.core.board.helper.CommonFunction;
+import com.taskhub.project.comon.CommonFunction;
 import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.BoardCardRepo;
 import com.taskhub.project.core.board.repo.BoardColumnRepo;
@@ -95,7 +95,8 @@ public class BoardService {
         boardColumnRepo.save(column);
 
         var resp = mapper.map(savedCard, BoardCardCreateResp.class);
-        resp.setBoardColumnId(column.getId());
+        resp.setColumnId(column.getId());
+        resp.setBoardId(column.getBoard().getId());
 
         return ServiceResult.created(resp);
     }

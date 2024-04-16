@@ -1,5 +1,6 @@
 package com.taskhub.project.aspect.exceptionhandler;
 
+import com.taskhub.project.comon.Constants;
 import com.taskhub.project.comon.error.model.ApiError;
 import com.taskhub.project.comon.error.model.ApiValidationError;
 import com.taskhub.project.aspect.exception.ValidateException;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +27,7 @@ import java.util.Map;
 @ControllerAdvice
 public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     public static ResponseEntity<Object> buildResponseEntity(ApiError apiError) {
-        return new ResponseEntity<>(apiError, apiError.getStatus());
+        return new ResponseEntity<>(apiError, apiError.getHttpStatus());
     }
 
     @Override
@@ -50,11 +52,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ValidateException.class)
     public ResponseEntity<Object> handleValidateException(ValidateException ex) {
-        Map<String, String> errors = new HashMap<>();
+        var errors = new HashMap<String, List<String>>();
+
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
+
+            errors.computeIfAbsent(fieldName, k -> new ArrayList<>()).add(errorMessage);
         });
 
         var apiError = new ApiError(HttpStatus.CONFLICT);
@@ -62,19 +66,4 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         apiError.setSubErrors(List.of(new ApiValidationError(errors)));
         return RestExceptionHandler.buildResponseEntity(apiError);
     }
-
-    // @Override
-    // protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-    //     Map<String, String> errors = new HashMap<>();
-    //     ex.getBindingResult().getAllErrors().forEach((error) -> {
-    //         String fieldName = ((FieldError) error).getField();
-    //         String errorMessage = error.getDefaultMessage();
-    //         errors.put(fieldName, errorMessage);
-    //     });
-    //
-    //     ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
-    //     apiError.setMessage("Field is not valid");
-    //     apiError.setSubErrors(List.of(new ApiValidationError(errors)));
-    //     return buildResponseEntity(apiError);
-    // }
 }

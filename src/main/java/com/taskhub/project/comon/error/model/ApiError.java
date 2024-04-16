@@ -1,6 +1,7 @@
 package com.taskhub.project.comon.error.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.taskhub.project.comon.Constants;
 import lombok.Data;
 import org.springframework.http.HttpStatus;
 
@@ -9,7 +10,8 @@ import java.util.List;
 
 @Data
 public class ApiError {
-    private HttpStatus status;
+    private HttpStatus httpStatus;
+    private Constants.ServiceStatus serviceStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy hh:mm:ss")
     private LocalDateTime timestamp;
     private String message;
@@ -18,16 +20,17 @@ public class ApiError {
 
     public ApiError() {
         timestamp = LocalDateTime.now();
+        serviceStatus = Constants.ServiceStatus.ERROR;
     }
 
     public ApiError(HttpStatus status) {
         this();
-        this.status = status;
+        this.httpStatus = status;
     }
 
     public ApiError(HttpStatus status, String message, Throwable ex) {
         this();
-        this.status = status;
+        this.httpStatus = status;
         this.message = message;
         this.debugMessage = ex.getLocalizedMessage();
     }

@@ -73,7 +73,7 @@ public class BoardSocket {
     }
 
     @MessageMapping("/{boardId}/moveCard")
-    public void moveColumn(
+    public void moveCard(
             @DestinationVariable String boardId,
             @Payload BoardCardMoveReq req
     ) {
@@ -81,7 +81,7 @@ public class BoardSocket {
 
         var response = SocketResponse.<BoardCardMoveReq, ACTION>builder()
                 .data(result.getData())
-                .action(ACTION.MOVE_COLUMN)
+                .action(ACTION.MOVE_CARD)
                 .build();
 
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);

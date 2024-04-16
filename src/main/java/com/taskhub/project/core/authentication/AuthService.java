@@ -1,19 +1,21 @@
 package com.taskhub.project.core.authentication;
 
 import com.taskhub.project.aspect.exception.ServerException;
+import com.taskhub.project.aspect.exception.model.ErrorsData;
+import com.taskhub.project.comon.service.model.ServiceResult;
 import com.taskhub.project.core.authentication.dtos.DetailsAppUserDTO;
 import com.taskhub.project.core.authentication.entities.ConfirmToken;
-import com.taskhub.project.aspect.exception.ValidateExceptionBuilder;
 import com.taskhub.project.core.authentication.model.*;
 import com.taskhub.project.core.authentication.repo.ConfirmTokenRepo;
+import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
 import com.taskhub.project.core.email.EmailSender;
+import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.user.constans.UserStatus;
 import com.taskhub.project.core.user.entities.AppUser;
 import com.taskhub.project.core.user.repo.UserRepo;
 import io.jsonwebtoken.MalformedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -32,8 +34,10 @@ public class AuthService {
     private static final int TOKEN_EXPIRED_MINUTE = 15;
     private final ConfirmTokenRepo tokenRepo;
     private final UserRepo userRepo;
+    private final WorkSpaceMemberRepo boardMemberRepo;
 
     private final JWTService jwtService;
+    private final ValidatorService validator;
 
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -41,20 +45,35 @@ public class AuthService {
 
 
     public AuthenticationResponse register(RegisteredRequest request) throws AuthenticationException {
-        ValidateExceptionBuilder exceptionBuilder = new ValidateExceptionBuilder();
+        validator.tryValidate(request)
+                .withConstraint(
+                        () -> userRepo.existByUsername(request.getUsername()),
+                        ErrorsData.of("username", "username.exists", "Username already exists")
+                )
+                .withConstraint(
+                        () -> userRepo.existByEmail(request.getEmail()),
+                        ErrorsData.of("email", "email.used", "Email has been use")
+                )
+                .message("AuthService.register")
+                .throwIfFails();
 
-        if (userRepo.existByUsername(request.getUsername())) {
-            exceptionBuilder.addFieldError("username", "username.exists", "Username already exists");
-        }
-        if (userRepo.existByEmail(request.getEmail())) {
-            exceptionBuilder.addFieldError("email", "email.used", "Email has been use");
-        }
 
-        if (!exceptionBuilder.isEmptyError()) {
-            throw exceptionBuilder
-                    .message("AuthService.register")
-                    .build();
-        }
+        // ValidateExceptionBuilder exceptionBuilder = new ValidateExceptionBuilder();
+        //
+        // exceptionBuilder.addFieldError(ValidatorUtils.validate(request));
+        //
+        // if (userRepo.existByUsername(request.getUsername())) {
+        //     exceptionBuilder.addFieldError("username", "username.exists", "Username already exists");
+        // }
+        // if (userRepo.existByEmail(request.getEmail())) {
+        //     exceptionBuilder.addFieldError("email", "email.used", "Email has been use");
+        // }
+        //
+        // if (!exceptionBuilder.isEmptyError()) {
+        //     throw exceptionBuilder
+        //             .message("AuthService.register")
+        //             .build();
+        // }
 
         AppUser user = AppUser.builder()
                 .fullName(request.getFullName())
@@ -192,4 +211,29 @@ public class AuthService {
         userRepo.save(user);
     }
 
+    public ServiceResult<BoardAuthorResponse> authorBoard(BoardAuthorRequest request) {
+        var token = jwtService.decodeToken(request.getAccessToken());
+        if (token == null) { // SHOULD RE MOVE ?
+            throw new ServerException("AuthService.authorBoard");
+        }
+
+        var boardMember = boardMemberRepo
+                .findByWorkspaceIdAndUserId(request.getBoardId(), token.getUserId())
+                .orElse(null);
+
+        if (boardMember == null) {
+            throw new ServerException("AuthService.authorBoard");
+        }
+
+        // get role
+
+        // get action
+
+        // build role details
+
+        // generate token
+
+
+        return null;
+    }
 }

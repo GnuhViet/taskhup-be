@@ -1,9 +1,12 @@
 package com.taskhub.project.core.user.entities;
 
+import com.taskhub.project.core.board.domain.Board;
 import com.taskhub.project.core.user.constans.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+
+import java.util.Set;
 
 @Getter
 @Setter
@@ -26,9 +29,17 @@ public class AppUser {
     @Column(unique = true)
     private String phoneNumber;
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "role_id")
-    private Role roles;
+    // @ManyToOne(fetch =  FetchType.LAZY)
+    // @JoinColumn(name = "role_id")
+    // private Role roles;
+
+    // @ManyToMany(fetch = FetchType.LAZY)
+    // @JoinTable(
+    //         name = "board_member",
+    //         joinColumns = @JoinColumn(name = "user_id"),
+    //         inverseJoinColumns = @JoinColumn(name = "board_id")
+    // )
+    // private Set<Board> boards;
 
     // projections
 
