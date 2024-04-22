@@ -42,10 +42,11 @@ public class ValidateExceptionBuilder {
         return this;
     }
 
-    public void throwIfFails() {
+    public ValidateExceptionBuilder throwIfFails() {
         if (!fieldErrors.isEmpty()) {
             throw build();
         }
+        return this;
     }
 
     public ValidateExceptionBuilder message(String message) {

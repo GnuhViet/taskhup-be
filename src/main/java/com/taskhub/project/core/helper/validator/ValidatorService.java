@@ -36,9 +36,25 @@ public class ValidatorService {
         return errors;
     }
 
+
+    /**
+     * Not throw exception if validation fails
+     */
     public ValidateExceptionBuilder tryValidate(Object object) {
         ValidateExceptionBuilder exceptionBuilder = new ValidateExceptionBuilder();
         exceptionBuilder.addFieldError(validate(object));
+        return exceptionBuilder;
+    }
+
+    /**
+     * Throw exception if validation fails
+     */
+    public ValidateExceptionBuilder doValidate(Object object) {
+        ValidateExceptionBuilder exceptionBuilder = new ValidateExceptionBuilder();
+        exceptionBuilder.addFieldError(validate(object));
+
+        exceptionBuilder.throwIfFails();
+
         return exceptionBuilder;
     }
 }

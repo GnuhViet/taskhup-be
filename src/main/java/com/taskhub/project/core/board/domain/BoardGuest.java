@@ -3,10 +3,18 @@ package com.taskhub.project.core.board.domain;
 import com.taskhub.project.core.user.entities.AppUser;
 import com.taskhub.project.core.user.entities.Role;
 import jakarta.persistence.*;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
-@Entity(name = "board_guest")
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Entity
+@Table(name = "board_guest")
 public class BoardGuest {
     @EmbeddedId
     private BoardGuestKey id;
@@ -21,7 +29,7 @@ public class BoardGuest {
     @JoinColumn(name = "board_id")
     private Board board;
 
-    private Date joinDate;
+    private LocalDateTime joinDate;
 
     @ManyToOne
     @JoinColumn(name = "role_id")

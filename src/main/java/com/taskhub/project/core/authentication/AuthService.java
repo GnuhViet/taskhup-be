@@ -44,7 +44,7 @@ public class AuthService {
     private final EmailSender emailSender;
 
 
-    public AuthenticationResponse register(RegisteredRequest request) throws AuthenticationException {
+    public AuthenticationResponse register(RegisterRequest request) throws AuthenticationException {
         validator.tryValidate(request)
                 .withConstraint(
                         () -> userRepo.existByUsername(request.getUsername()),

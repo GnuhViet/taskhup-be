@@ -38,4 +38,8 @@ public class WorkSpace {
         int getUserCount();
         String getType();
     }
+
+    public interface IdOnly {
+        String getId();
+    }
 }

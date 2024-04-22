@@ -2,14 +2,16 @@ package com.taskhub.project.core.board.domain;
 
 import com.taskhub.project.core.workspace.domain.WorkSpace;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
 @Getter
 @Setter
 @Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @Table(name = "board")
 public class Board {
     @Id
@@ -44,4 +46,11 @@ public class Board {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workspace_id")
     private WorkSpace workspace;
+
+    public interface SimpleBoard {
+        String getId();
+        String getTitle();
+        String getDescription();
+        String getType();
+    }
 }

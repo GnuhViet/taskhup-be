@@ -49,6 +49,13 @@ springdoc:
 server:
   port: 8080
 
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
 app:
   base-uri: http://localhost:8080/
   name: task-hub
@@ -62,6 +69,7 @@ app:
 
   auth:
     white-list: >
+      /actuator/**,
       /api/v1/auth/**,
       /ws-endpoint/**,
       /swagger,

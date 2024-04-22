@@ -18,7 +18,7 @@ public class AuthResource {
 
     @PostMapping("/register")
     @Operation(summary = "User register, Role: All")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisteredRequest request) {
+    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(authService.register(request));

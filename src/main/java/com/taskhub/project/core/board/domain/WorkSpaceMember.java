@@ -4,10 +4,17 @@ import com.taskhub.project.core.user.entities.AppUser;
 import com.taskhub.project.core.user.entities.Role;
 import com.taskhub.project.core.workspace.domain.WorkSpace;
 import jakarta.persistence.*;
+import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
-@Entity(name = "workspace_member")
+@Builder
+@Setter
+@Getter
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Entity
+@Table(name = "workspace_member")
 public class WorkSpaceMember {
     @EmbeddedId
     private WorkSpaceMemberKey id;
@@ -22,9 +29,9 @@ public class WorkSpaceMember {
     @JoinColumn(name = "workspace_id")
     private WorkSpace workspace;
 
-    private Date joinDate;
-
     @ManyToOne
     @JoinColumn(name = "role_id")
     private Role role;
+
+    private LocalDateTime joinDate;
 }

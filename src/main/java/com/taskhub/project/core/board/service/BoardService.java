@@ -1,5 +1,6 @@
 package com.taskhub.project.core.board.service;
 
+import com.taskhub.project.aspect.exception.model.ErrorsData;
 import com.taskhub.project.core.board.domain.Board;
 import com.taskhub.project.core.board.domain.BoardCard;
 import com.taskhub.project.core.board.domain.BoardColumn;
@@ -10,9 +11,14 @@ import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.BoardCardRepo;
 import com.taskhub.project.core.board.repo.BoardColumnRepo;
 import com.taskhub.project.core.board.repo.BoardRepo;
+import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
+import com.taskhub.project.core.board.resources.api.model.BoardCreateResp;
 import com.taskhub.project.core.board.resources.api.model.GetAllBoardResp;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.comon.service.model.ServiceResult;
+import com.taskhub.project.core.helper.validator.ValidatorService;
+import com.taskhub.project.core.workspace.WorkSpaceRepo;
+import com.taskhub.project.core.workspace.dto.SimpleBoardDto;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -31,16 +37,28 @@ public class BoardService {
     private final BoardRepo boardRepo;
     private final BoardColumnRepo boardColumnRepo;
     private final BoardCardRepo boardCardRepo;
+    private final WorkSpaceRepo workSpaceRepo;
+    private final ValidatorService validator;
     private final ModelMapper mapper;
 
-    public BoardDto createBoard(BoardDto boardDto) {
-        boardDto.setId(null);
-        return mapper.map(
-                boardRepo.save(
-                        mapper.map(boardDto, Board.class)
-                ),
-                BoardDto.class
-        );
+    public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> !workSpaceRepo.isWorkSpaceOwner(req.getWorkspaceId(), userId),
+                        ErrorsData.of("workspaceId", "Role.Invalid", "You are not the owner of the workspace")
+                )
+                .throwIfFails();
+
+        var board = Board.builder()
+                .title(req.getTitle())
+                .description("null") //TODO
+                .workspace(workSpaceRepo.getReferenceById(req.getWorkspaceId()))
+                .build();
+
+        return ServiceResult.ok(mapper.map(
+                boardRepo.save(board),
+                BoardCreateResp.class
+        ));
     }
 
     public BoardDto getBoard(String boardId) {

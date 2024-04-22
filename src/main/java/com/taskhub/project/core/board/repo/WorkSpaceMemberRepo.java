@@ -14,5 +14,12 @@ public interface WorkSpaceMemberRepo extends JpaRepository<WorkSpaceMember, Work
     // @Query(value = "selecct * from workspace", nativeQuery = true)
     // boolean hasMember(String boardId, String userId);
 
+    @Query("""
+        SELECT CASE WHEN COUNT(wsm.id) > 0 THEN TRUE ELSE FALSE END
+        FROM WorkSpaceMember wsm
+        WHERE wsm.workspace.id = :workspaceId AND wsm.user.id = :userId
+    """)
+    boolean hasMember(String workspaceId, String userId);
+
     Optional<WorkSpaceMember> findByWorkspaceIdAndUserId(String workspaceId, String userId);
 }

@@ -13,18 +13,18 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegisteredRequest {
+public class RegisterRequest {
     @JsonProperty("fullName")
     @NotBlank(message = "Full name is mandatory")
     private String fullName;
 
-    @Pattern(regexp = "^[a-zA-Z0-9_]{6,}$",
+    @Pattern(regexp = "^[a-zA-Z0-9._]{6,}$",
             message = "username must be min 5 character and not containing special character")
     @NotBlank(message = "Username is mandatory")
     private String username;
 
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{4,12}$",
-            message = "password must be min 4 and max 12 length containing at least 1 uppercase, 1 lowercase, 1 special character and 1 digit")
+    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{4,50}$",
+            message = "password must be min 4 and max 50 character containing at least 1 uppercase, 1 lowercase, 1 special character and 1 digit")
     @NotBlank(message = "Password is mandatory")
     private String password;
 
@@ -32,6 +32,8 @@ public class RegisteredRequest {
     // @Pattern(regexp = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
     //         + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$",
     //         message = "email is invalid")
+    @Pattern(regexp = "^[a-zA-Z0-9._]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$",
+            message = "email is invalid")
     @NotBlank(message = "Email is mandatory")
     private String email;
 }
