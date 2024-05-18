@@ -39,8 +39,19 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
     )
     Optional<List<WorkSpace.UserWorkSpace>> getUserWorkSpaces(@Param("userId") String userId);
 
-    @Query("select CASE WHEN COUNT(ws.id) > 0 THEN true ELSE false END from WorkSpace ws where ws.id = :workSpaceId and ws.ownerId = :userId")
+    @Query("""
+        select CASE WHEN COUNT(ws.id) > 0 THEN true ELSE false END
+        from WorkSpace ws where ws.id = :workSpaceId and ws.ownerId = :userId
+    """)
     boolean isWorkSpaceOwner(String workSpaceId, String userId);
+
+    @Query("""
+            select CASE WHEN COUNT(ws.id) > 0 THEN true ELSE false END
+            from WorkSpace ws
+                    join Board b on ws.id = b.workspace.id
+            where b.id = :boardId and ws.ownerId = :userId
+    """)
+    boolean isWorkSpaceOwnerByBoardId(String boardId, String userId);
 
     @Query(value = """
         select ws.id as id

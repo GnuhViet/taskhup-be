@@ -36,6 +36,12 @@ public class ValidatorService {
         return errors;
     }
 
+    /**
+     * Not throw exception if validation fails
+     */
+    public ValidateExceptionBuilder validate() {
+        return new ValidateExceptionBuilder();
+    }
 
     /**
      * Not throw exception if validation fails

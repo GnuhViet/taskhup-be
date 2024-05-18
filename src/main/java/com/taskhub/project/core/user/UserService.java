@@ -1,15 +1,9 @@
 package com.taskhub.project.core.user;
 
 import com.taskhub.project.aspect.exception.ServerException;
-import com.taskhub.project.core.authentication.dtos.DetailsAppUserDTO;
-import com.taskhub.project.core.authentication.model.UserProfileRequest;
-import com.taskhub.project.core.user.constans.UserStatus;
-import com.taskhub.project.core.user.entities.AppUser;
-import com.taskhub.project.core.user.repo.RoleRepo;
 import com.taskhub.project.core.user.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

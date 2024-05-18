@@ -1,6 +1,6 @@
 package com.taskhub.project.core.board.resources.websocket;
 
-import com.taskhub.project.comon.socket.model.SocketResponse;
+import com.taskhub.project.common.socket.model.SocketResponse;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import lombok.AllArgsConstructor;

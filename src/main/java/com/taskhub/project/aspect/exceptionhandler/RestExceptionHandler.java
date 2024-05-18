@@ -1,8 +1,7 @@
 package com.taskhub.project.aspect.exceptionhandler;
 
-import com.taskhub.project.comon.Constants;
-import com.taskhub.project.comon.error.model.ApiError;
-import com.taskhub.project.comon.error.model.ApiValidationError;
+import com.taskhub.project.common.error.model.ApiError;
+import com.taskhub.project.common.error.model.ApiValidationError;
 import com.taskhub.project.aspect.exception.ValidateException;
 import io.jsonwebtoken.MalformedJwtException;
 import org.springframework.core.Ordered;
@@ -21,7 +20,6 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
@@ -38,8 +36,15 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(MalformedJwtException.class)
     protected ResponseEntity<Object> handleEntityNotFound(MalformedJwtException ex) {
-        ApiError apiError = new ApiError(HttpStatus.FORBIDDEN);
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
         apiError.setMessage(ex.getMessage());
+        return buildResponseEntity(apiError);
+    }
+
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<Object> handleEntityNotFound(Exception ex) {
+        ApiError apiError = new ApiError(HttpStatus.INTERNAL_SERVER_ERROR);
+        apiError.setMessage("An error occurred while processing the request");
         return buildResponseEntity(apiError);
     }
 
@@ -64,6 +69,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
         var apiError = new ApiError(HttpStatus.CONFLICT);
         apiError.setMessage(ex.getMessage());
         apiError.setSubErrors(List.of(new ApiValidationError(errors)));
+        apiError.setCode(ex.getCode());
         return RestExceptionHandler.buildResponseEntity(apiError);
     }
 }

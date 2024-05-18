@@ -48,4 +48,16 @@ public interface BoardRepo extends JpaRepository<Board, String> {
             where b.workspace_id = :workspaceId
        """, nativeQuery = true)
     List<Board.SimpleBoard> getBoardsByWorkSpaceId(@Param("workspaceId") String workspaceId);
+
+    @Query(value = """
+            select
+                b.id as id,
+                b.title as title,
+                b.description as description
+            from board b
+                join board_guest bg on b.id = bg.board_id
+            where b.workspace_id = :workspaceId
+                and bg.user_id = :userId
+       """, nativeQuery = true)
+    List<Board.SimpleBoard> getGuestBoards(@Param("workspaceId") String workspaceId, @Param("userId") String userId);
 }

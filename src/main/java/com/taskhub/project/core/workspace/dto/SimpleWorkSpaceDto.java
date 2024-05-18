@@ -9,5 +9,6 @@ public class SimpleWorkSpaceDto {
     private String id;
     private String title;
     private String type;
+    private Boolean canCreateBoard;
     private List<SimpleBoardDto> boards;
 }

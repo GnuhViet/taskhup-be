@@ -1,21 +1,20 @@
 package com.taskhub.project.core.invite;
 
 import com.taskhub.project.aspect.exception.model.ErrorsData;
-import com.taskhub.project.comon.CommonFunction;
-import com.taskhub.project.comon.service.model.ServiceResult;
-import com.taskhub.project.core.board.domain.BoardGuest;
-import com.taskhub.project.core.board.domain.BoardGuestKey;
-import com.taskhub.project.core.board.domain.WorkSpaceMember;
-import com.taskhub.project.core.board.domain.WorkSpaceMemberKey;
+import com.taskhub.project.common.CommonFunction;
+import com.taskhub.project.common.service.model.ServiceResult;
+import com.taskhub.project.core.auth.authorization.constans.DefaultRole;
+import com.taskhub.project.core.workspace.domain.BoardGuest;
+import com.taskhub.project.core.workspace.domain.BoardGuestKey;
+import com.taskhub.project.core.workspace.domain.WorkSpaceMember;
+import com.taskhub.project.core.workspace.domain.WorkSpaceMemberKey;
 import com.taskhub.project.core.board.repo.BoardGuestRepo;
 import com.taskhub.project.core.board.repo.BoardRepo;
 import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.invite.domain.InviteLink;
-import com.taskhub.project.core.invite.model.AcceptInviteLinkResp;
-import com.taskhub.project.core.invite.model.CreateInviteLinkReq;
-import com.taskhub.project.core.user.constans.DefaultRole;
-import com.taskhub.project.core.user.repo.RoleRepo;
+import com.taskhub.project.core.invite.model.InviteLinkCreateReq;
+import com.taskhub.project.core.auth.authorization.RoleRepo;
 import com.taskhub.project.core.user.repo.UserRepo;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
 import lombok.AllArgsConstructor;
@@ -49,15 +48,27 @@ public class InviteLinkService {
         WORKSPACE("WORKSPACE"),
         BOARD("BOARD");
 
-        private final String value;
+        public final String value;
 
         InviteLinkType(String value) {
             this.value = value;
         }
     }
 
-    public ServiceResult<String> createInviteLink(String userId, CreateInviteLinkReq req) {
-        validator.doValidate(req)
+    @Getter
+    public enum MemberStatus {
+        WAITING("WAITING"),
+        ACCEPTED("ACCEPTED");
+
+        public final String value;
+
+        MemberStatus(String value) {
+            this.value = value;
+        }
+    }
+
+    public ServiceResult<String> createInviteLink(String userId, InviteLinkCreateReq req) {
+        validator.doValidate(req) // TODO validate ROLE
                 .withConstraint(
                         () -> {
                             var type = InviteLinkType.valueOf(req.getType().toUpperCase());
@@ -75,7 +86,31 @@ public class InviteLinkService {
                         },
                         ErrorsData.of("destinationId", "not.found", "Destination not found")
                 )
+                // .withConstraint(
+                //         () -> inviteLinkRepo.existsByDestinationId(req.getDestinationId()),
+                //         ErrorsData.of("destinationId", "already.haveLink", "Destination already invite link")
+                // )
+                .withConstraint(
+                        () -> {
+                            var type = InviteLinkType.valueOf(req.getType().toUpperCase());
+                            boolean res;
+                            switch (type) {
+                                case WORKSPACE -> res = workSpaceRepo.isWorkSpaceOwner(req.getDestinationId(), userId);
+                                case BOARD -> res = workSpaceRepo.isWorkSpaceOwnerByBoardId(req.getDestinationId(), userId);
+                                default -> res = true;
+                            }
+                            return !res;
+                        },
+                        ErrorsData.of("userId", "not.owner", "User not owner")
+                )
                 .throwIfFails();
+
+        if (inviteLinkRepo.existsByDestinationId(req.getDestinationId())) {
+            var link = inviteLinkRepo.findByDestinationId(req.getDestinationId());
+            return ServiceResult.ok(
+                    String.valueOf(link.getType().charAt(0)).toLowerCase() + "_" + link.getId()
+            );
+        }
 
         var inviteLink = new InviteLink();
         inviteLink.setDestinationId(req.getDestinationId());
@@ -102,8 +137,7 @@ public class InviteLinkService {
         );
     }
 
-
-    public ServiceResult<AcceptInviteLinkResp> acceptInvite(String userId, String id) {
+    public ServiceResult<InviteLinkCreateReq> createJoinRequest(String userId, String id) {
         final InviteLink[] inviteLink = new InviteLink[1];
         validator.tryValidate(id)
                 .withConstraint(
@@ -120,6 +154,20 @@ public class InviteLinkService {
                         },
                         ErrorsData.of("id", "expired", "invite link expired")
                 )
+                .withConstraint(
+                        () -> {
+                            var type = InviteLinkType.valueOf(inviteLink[0].getType().toUpperCase());
+                            boolean res;
+                            switch (type) {
+                                case WORKSPACE -> res = workSpaceMemberRepo.hasMember(inviteLink[0].getDestinationId(), userId);
+                                case BOARD -> res = boardGuestRepo.hasGuest(inviteLink[0].getDestinationId(), userId);
+                                default -> res = false;
+                            }
+                            return res;
+                        },
+                        ErrorsData.of("userId", "already.in", "User already in")
+
+                )
                 .throwIfFails();
 
         var link = inviteLink[0];
@@ -129,11 +177,15 @@ public class InviteLinkService {
                 var ws = workSpaceRepo.findById(link.getDestinationId()).orElse(null);
                 if (ws == null) return ServiceResult.notFound();
                 if (workSpaceMemberRepo.hasMember(ws.getId(), userId)) break;
+                var role = roleRepo.getReferenceById(DefaultRole.MEMBER.getId());
 
                 var wsm = WorkSpaceMember.builder()
                         .id(new WorkSpaceMemberKey(userId, ws.getId()))
                         .joinDate(LocalDateTime.now())
+                        .inviteStatus(MemberStatus.WAITING.value)
                         .workspace(ws)
+                        .user(userRepo.getReferenceById(userId))
+                        .role(role)
                         .build();
 
                 workSpaceMemberRepo.save(wsm);
@@ -142,10 +194,15 @@ public class InviteLinkService {
                 var board = boardRepo.findById(link.getDestinationId()).orElse(null);
                 if (board == null) return ServiceResult.notFound();
                 if (boardGuestRepo.hasGuest(board.getId(), userId)) break;
+                var role = roleRepo.getReferenceById(DefaultRole.GUEST.getId());
 
                 var bg = BoardGuest.builder()
                         .id(new BoardGuestKey(userId, board.getId()))
                         .joinDate(LocalDateTime.now())
+                        .inviteStatus(MemberStatus.WAITING.value)
+                        .user(userRepo.getReferenceById(userId))
+                        .board(board)
+                        .role(role)
                         .build();
 
                 boardGuestRepo.save(bg);
@@ -153,6 +210,23 @@ public class InviteLinkService {
         }
 
 
-        return ServiceResult.ok(new AcceptInviteLinkResp(link.getType(), link.getDestinationId()));
+        return ServiceResult.ok(new InviteLinkCreateReq(link.getType(), link.getDestinationId()));
+    }
+
+    //TODO author
+    public ServiceResult<String> getInviteLink(String userId, String destinationId) {
+        // validator.validate()
+        //         .withConstraint(
+        //                 () -> {
+        //
+        //                 },
+        //                 ErrorsData.of("destinationId", "not.found", "Destination not found")
+        //         )
+        //         .throwIfFails();
+
+        var resp = inviteLinkRepo.findByDestinationId(destinationId);
+
+
+        return ServiceResult.ok(String.valueOf(resp.getType().charAt(0)).toLowerCase() + "_" + resp.getId());
     }
 }

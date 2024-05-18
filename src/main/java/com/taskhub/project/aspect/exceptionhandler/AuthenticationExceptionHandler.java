@@ -1,18 +1,13 @@
 package com.taskhub.project.aspect.exceptionhandler;
 
-import com.taskhub.project.comon.error.model.ApiError;
+import com.taskhub.project.common.error.model.ApiError;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Order(0)
 @ControllerAdvice
@@ -20,7 +15,7 @@ public class AuthenticationExceptionHandler extends ResponseEntityExceptionHandl
 
     @ExceptionHandler(BadCredentialsException.class)
     protected ResponseEntity<Object> handleBadCredentialsException(BadCredentialsException ex) {
-        ApiError apiError = new ApiError(HttpStatus.UNAUTHORIZED);
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST);
         apiError.setMessage(ex.getMessage());
         return RestExceptionHandler.buildResponseEntity(apiError);
     }

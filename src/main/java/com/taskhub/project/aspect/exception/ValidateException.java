@@ -8,8 +8,16 @@ public class ValidateException extends AuthenticationException {
     @Getter
     private BindingResult bindingResult;
 
-    public ValidateException(String message, BindingResult bindingResult) {
+    @Getter
+    private String code;
+
+    public ValidateException(
+            String message,
+            String code,
+            BindingResult bindingResult
+    ) {
         super(message);
+        this.code = code;
         this.bindingResult = bindingResult;
     }
 }

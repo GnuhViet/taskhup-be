@@ -3,7 +3,7 @@ package com.taskhub.project.core.board.resources.api;
 import com.taskhub.project.core.board.dto.BoardDto;
 import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
 import com.taskhub.project.core.board.service.BoardService;
-import com.taskhub.project.comon.service.model.ServiceResult;
+import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.service.BoardStarService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

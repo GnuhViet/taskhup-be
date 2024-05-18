@@ -8,6 +8,9 @@ import org.springframework.stereotype.Repository;
 
 // @Repository
 public interface UserRepo extends JpaRepository<AppUser, String> {
+    @Query("SELECT u.fullName as fullName FROM AppUser u WHERE u.id = :id")
+    AppUser.AppUserFullName getFullNameById(@Param("id") String id);
+
     @Query("SELECT u.id as id FROM AppUser u WHERE u.username = :username")
     AppUser.AppUserId getIdByUsername(@Param("username") String username);
 

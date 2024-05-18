@@ -1,14 +1,10 @@
 package com.taskhub.project.core.board.service;
 
-import com.taskhub.project.aspect.exception.model.ErrorsData;
-import com.taskhub.project.core.board.domain.BoardStar;
-import com.taskhub.project.core.board.domain.WorkSpaceMember;
+import com.taskhub.project.core.workspace.domain.BoardStar;
 import com.taskhub.project.core.board.repo.BoardGuestRepo;
-import com.taskhub.project.core.board.repo.BoardRepo;
 import com.taskhub.project.core.board.repo.BoardStarRepo;
 import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
-import com.taskhub.project.core.user.repo.UserRepo;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

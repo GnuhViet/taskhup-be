@@ -7,6 +7,7 @@ import org.springframework.validation.FieldError;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 public class ValidateExceptionBuilder {
@@ -43,8 +44,9 @@ public class ValidateExceptionBuilder {
     }
 
     public ValidateExceptionBuilder throwIfFails() {
+        // get the first code
         if (!fieldErrors.isEmpty()) {
-            throw build();
+            throw build(Objects.requireNonNull(fieldErrors.get(0).getRejectedValue()).toString());
         }
         return this;
     }
@@ -54,10 +56,10 @@ public class ValidateExceptionBuilder {
         return this;
     }
 
-    public ValidateException build() {
+    public ValidateException build(String code) {
         BeanPropertyBindingResult bindingResult = new BeanPropertyBindingResult(null, null);
         fieldErrors.forEach(bindingResult::addError);
-        return new ValidateException(message, bindingResult);
+        return new ValidateException(message, code, bindingResult);
     }
 
     public boolean isEmptyError() {

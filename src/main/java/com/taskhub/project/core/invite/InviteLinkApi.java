@@ -1,32 +1,42 @@
 package com.taskhub.project.core.invite;
 
-import com.taskhub.project.comon.service.model.ServiceResult;
-import com.taskhub.project.core.invite.model.CreateInviteLinkReq;
+import com.taskhub.project.common.Constants;
+import com.taskhub.project.core.invite.model.InviteLinkCreateReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/invite")
+@RequestMapping("/api/v1/invite")
 @AllArgsConstructor
 public class InviteLinkApi {
     private final InviteLinkService inviteLinkService;
 
-    @GetMapping("/{id}")
-    @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<?> acceptInvite(Principal principal, @PathVariable String id) {
-        var resp = inviteLinkService.acceptInvite(principal.getName(), id);
+    @GetMapping("/join/{id}")
+    @Operation(summary = "create join request", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> createJoinRequest(Principal principal, @PathVariable String id) {
+        var resp = inviteLinkService.createJoinRequest(principal.getName(), id);
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 
+    @Secured(Constants.ActionString.MANAGE_USER)
     @PostMapping("/create")
     @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<?> createInvite(@RequestBody CreateInviteLinkReq req, Principal principal) {
+    public ResponseEntity<?> createInvite(@RequestBody InviteLinkCreateReq req, Principal principal) {
         var resp = inviteLinkService.createInviteLink(principal.getName(), req);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.MANAGE_USER)
+    @GetMapping("/get-link/{destinationId}")
+    @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getInviteLink(Principal principal, @PathVariable String destinationId) {
+        var resp = inviteLinkService.getInviteLink(principal.getName(), destinationId);
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 }

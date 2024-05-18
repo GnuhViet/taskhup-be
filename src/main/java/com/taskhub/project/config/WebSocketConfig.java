@@ -1,11 +1,9 @@
 package com.taskhub.project.config;
 
-import com.taskhub.project.core.authentication.JWTService;
+import com.taskhub.project.core.auth.authentication.JWTService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.config.ChannelRegistration;

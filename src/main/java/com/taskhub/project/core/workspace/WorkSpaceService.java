@@ -1,13 +1,14 @@
 package com.taskhub.project.core.workspace;
 
-import com.taskhub.project.comon.service.model.ServiceResult;
-import com.taskhub.project.core.board.domain.WorkSpaceMember;
-import com.taskhub.project.core.board.domain.WorkSpaceMemberKey;
+import com.taskhub.project.common.service.model.ServiceResult;
+import com.taskhub.project.core.auth.authorization.constans.Action;
+import com.taskhub.project.core.workspace.domain.WorkSpaceMember;
+import com.taskhub.project.core.workspace.domain.WorkSpaceMemberKey;
 import com.taskhub.project.core.board.repo.BoardRepo;
 import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
-import com.taskhub.project.core.user.constans.DefaultRole;
-import com.taskhub.project.core.user.repo.RoleRepo;
+import com.taskhub.project.core.auth.authorization.constans.DefaultRole;
+import com.taskhub.project.core.auth.authorization.RoleRepo;
 import com.taskhub.project.core.user.repo.UserRepo;
 import com.taskhub.project.core.workspace.domain.WorkSpace;
 import com.taskhub.project.core.workspace.dto.SimpleBoardDto;
@@ -37,6 +38,11 @@ public class WorkSpaceService {
     private final WorkSpaceRepo workSpaceRepo;
     private final BoardRepo boardRepo;
     private final WorkSpaceMemberRepo workSpaceMemberRepo;
+
+    public ServiceResult<?> getWorkSpaceMembers(String id) {
+        return ServiceResult
+                .ok(workSpaceMemberRepo.getWorkspaceMember(id)); // test api da viet
+    }
 
     @Getter
     @AllArgsConstructor
@@ -84,21 +90,29 @@ public class WorkSpaceService {
         userWorkSpaceList.forEach(item -> {
             if (WorkSpaceMemberType.JOINED.value.equals(item.getType())) {
                 var workspace = mapper.map(item, SimpleWorkSpaceDto.class);
+                var actionCode = roleRepo.getActionList(item.getId(), userId).getActionCode();
+                workspace.setCanCreateBoard(
+                        actionCode != null && actionCode.contains(Action.EDIT_BOARD.getCode())
+                );
                 resp.getJoinedWorkSpaces().add(workspace);
             }
-            else if (WorkSpaceMemberType.GUEST.value.equals(item.getType())) {
+            else
+                if (WorkSpaceMemberType.GUEST.value.equals(item.getType())) {
                 var workspace = mapper.map(item, SimpleWorkSpaceDto.class);
+                workspace.setCanCreateBoard(false);
                 resp.getGuestWorkSpaces().add(workspace);
             }
         });
-
 
         resp.getJoinedWorkSpaces().forEach(item -> {
             var boards = boardRepo.getBoardsByWorkSpaceId(item.getId());
             item.setBoards(boards.stream().map(board -> mapper.map(board, SimpleBoardDto.class)).toList());
         });
 
-        // TODO guest
+        resp.getGuestWorkSpaces().forEach(item -> {
+            var boards = boardRepo.getGuestBoards(item.getId(), userId);
+            item.setBoards(boards.stream().map(board -> mapper.map(board, SimpleBoardDto.class)).toList());
+        });
 
         return ServiceResult.ok(resp);
     }

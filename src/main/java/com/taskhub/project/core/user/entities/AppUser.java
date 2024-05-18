@@ -43,6 +43,10 @@ public class AppUser {
 
     // projections
 
+    public interface AppUserFullName {
+        String getFullName();
+    }
+
     public interface AppUserId {
         String getId();
     }

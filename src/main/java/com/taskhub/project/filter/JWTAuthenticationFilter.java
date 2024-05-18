@@ -1,6 +1,6 @@
 package com.taskhub.project.filter;
 
-import com.taskhub.project.core.authentication.JWTService;
+import com.taskhub.project.core.auth.authentication.JWTService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -40,15 +39,16 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        final String autHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String authenHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String authorHeader = request.getHeader("X-author");
         final String token;
 
-        if (autHeader == null || !autHeader.startsWith("Bearer ")) {
+        if (authenHeader == null || !authenHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        token = autHeader.substring(TOKEN_START_IDX);
+        token = authenHeader.substring(TOKEN_START_IDX);
 
         try {
             JWTService.DecodedToken decodedToken = jwtService.decodeToken(token);
@@ -57,17 +57,26 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            // Arrays.stream(decodedToken.getRoles()).forEach(role -> {
-            //     authorities.add(new SimpleGrantedAuthority(role));
-            // });
-            Authentication authenticationToken = new UsernamePasswordAuthenticationToken(decodedToken.getUserId(), null, authorities);
-            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            if (authorHeader == null) {
+                Authentication authenticationToken = new UsernamePasswordAuthenticationToken(decodedToken.getUserId(), null, null);
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
+            else {
+                var authorToken = jwtService.decodeToken(authorHeader);
+                var userId = decodedToken.getUserId();
+                var workSpaceId = authorToken.getRoleWithActions().getWorkSpaceId();
+                Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
+                authorToken.getRoleWithActions().getActions().forEach(action -> {
+                    authorities.add(new SimpleGrantedAuthority(action));
+                });
+
+                Authentication authenticationToken = new UsernamePasswordAuthenticationToken(userId, workSpaceId, authorities);
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            }
         } catch (Exception e) {
             log.error(e.getMessage());
             response.setHeader(HttpHeaders.WARNING, e.getMessage());
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         }
 
         filterChain.doFilter(request, response);
