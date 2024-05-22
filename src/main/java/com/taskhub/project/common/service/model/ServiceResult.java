@@ -14,6 +14,15 @@ public class ServiceResult<T> {
     String code;
     T data;
 
+    public static ServiceResult<?> error(String s) {
+        return ServiceResult.builder()
+                .httpStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+                .serviceStatus(Constants.ServiceStatus.ERROR)
+                .message(s)
+                .code(Code.INTERNAL_SERVER_ERROR)
+                .build();
+    }
+
 
     public static class Code {
         public static final String OK = "01";

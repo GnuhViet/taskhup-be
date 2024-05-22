@@ -51,6 +51,12 @@ dependencies {
     // test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+
+    // https://mvnrepository.com/artifact/com.cloudinary/cloudinary-core
+    implementation group: 'com.cloudinary', name: 'cloudinary-core', version: '1.38.0'
+    // https://mvnrepository.com/artifact/com.cloudinary/cloudinary-http44
+    implementation group: 'com.cloudinary', name: 'cloudinary-http44', version: '1.38.0'
+
 }
 
 tasks.named('test') {

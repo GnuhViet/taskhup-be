@@ -13,7 +13,7 @@ public interface ConfirmTokenRepo extends JpaRepository<ConfirmToken, String> {
 
     @Transactional
     @Query(
-            value = "select * from CONFIRM_TOKEN where APP_USER_ID = :userId",
+            value = "select * from confirm_token where APP_USER_ID = :userId",
             nativeQuery = true
     )
     Optional<ConfirmToken> findByAppUser_Id(@Param("userId") String userId);

@@ -24,6 +24,13 @@ public class AuthResource {
                 .body(authService.register(request));
     }
 
+    @PostMapping("/change-password")
+    @Operation(summary = "Change password, Role: All", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest request, Principal principal) {
+        var result = authService.changePassword(request, principal.getName());
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/login")
     @Operation(summary = "login , Role: All")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
@@ -53,11 +60,8 @@ public class AuthResource {
 
     @PostMapping("/email/confirm")
     @Operation(summary = "Email validation, Role: all", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<Void> validateEmailToken(@RequestParam String token, Principal principal) {
-        if (authService.validateEmailToken(token, principal.getName())) {
-            return ResponseEntity.status(HttpStatus.OK).build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
-        }
+    public ResponseEntity<?> validateEmailToken(@RequestBody ConfirmTokenRequest req, Principal principal) {
+        var result = authService.validateEmailToken(req.getToken(), principal.getName());
+        return new ResponseEntity<>(result, result.getHttpStatus());
     }
 }

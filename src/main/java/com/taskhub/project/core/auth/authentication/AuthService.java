@@ -8,6 +8,7 @@ import com.taskhub.project.core.auth.authentication.entities.ConfirmToken;
 import com.taskhub.project.core.auth.authentication.model.*;
 import com.taskhub.project.core.auth.authentication.repo.ConfirmTokenRepo;
 import com.taskhub.project.core.auth.authorization.RoleRepo;
+import com.taskhub.project.core.auth.authorization.constans.DefaultFile;
 import com.taskhub.project.core.auth.authorization.domain.Role;
 import com.taskhub.project.core.board.repo.BoardGuestRepo;
 import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
@@ -19,6 +20,7 @@ import com.taskhub.project.core.user.repo.UserRepo;
 import io.jsonwebtoken.MalformedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -86,6 +88,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .status(UserStatus.Inactive.name())
+                .avatar(DefaultFile.AVATAR.getId())
                 .build();
 
         ConfirmToken token = generateConfirmToken(user);
@@ -107,13 +110,10 @@ public class AuthService {
     public void sendConfirmToken(String userID) {
         ConfirmToken dbToken = tokenRepo.findByAppUser_Id(userID).orElse(null);
 
-        if (dbToken == null) {
-            throw new ServerException("AuthService.sendConfirmToken");
+        if (dbToken != null) {
+            tokenRepo.delete(dbToken);
+            tokenRepo.flush();
         }
-
-        tokenRepo.delete(dbToken);
-        tokenRepo.flush();
-
 
         ConfirmToken token = generateConfirmToken(userRepo.getReferenceById(userID));
         tokenRepo.save(token);
@@ -124,24 +124,45 @@ public class AuthService {
         emailSender.send(email, token.getToken());
     }
 
-    //TODO FIX THIS
-    // @Transactional(noRollbackFor = TokenAttemptsException.class)
-    public boolean validateEmailToken(String requestToken, String userID) {
+    public ServiceResult<?> validateEmailToken(String requestToken, String userID) {
 
-        // ConfirmToken dbToken = tokenRepo.findByAppUser_Id(userID).get().orElseThrow(() -> new TokenAttemptsException("Please resend token"));
-        //
-        // if (!dbToken.getToken().equals(requestToken)) {
-        //     if (dbToken.getAttempts() > 5) {
-        //         tokenRepo.delete(dbToken);
-        //         throw new TokenAttemptsException("Please resend token");
-        //     }
-        //     dbToken.setAttempts(dbToken.getAttempts() + 1);
-        //     return false;
-        // }
-        //
-        // userService.setUserActive(userID);
-        // tokenRepo.delete(dbToken);
-        return true;
+        ConfirmToken dbToken = tokenRepo.findByAppUser_Id(userID).orElse(null);
+
+        if (dbToken == null) {
+            return ServiceResult.error("Doesnt have token");
+        }
+
+        if (dbToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            tokenRepo.delete(dbToken);
+            return ServiceResult.builder()
+                    .code("token.expired")
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+
+        if (!dbToken.getToken().equals(requestToken)) {
+            if (dbToken.getAttempts() > 5) {
+                tokenRepo.delete(dbToken);
+                return ServiceResult.builder()
+                        .code("token.max-attempts")
+                        .httpStatus(HttpStatus.TOO_MANY_REQUESTS)
+                        .build();
+            }
+            dbToken.setAttempts(dbToken.getAttempts() + 1);
+            tokenRepo.save(dbToken);
+
+            return ServiceResult.builder()
+                    .code("token.invalid")
+                    .httpStatus(HttpStatus.BAD_REQUEST)
+                    .build();
+        }
+
+        var user = userRepo.findById(userID).orElseThrow(() -> new ServerException("AuthService.validateEmailToken"));
+        user.setStatus(UserStatus.Active.name());
+        user.setVerify(true);
+        tokenRepo.delete(dbToken);
+
+        return ServiceResult.ok(null);
     }
 
     private static ConfirmToken generateConfirmToken(AppUser user) {
@@ -197,23 +218,33 @@ public class AuthService {
     }
 
     @Transactional
-    public void changePassword(ChangePasswordRequest req, String userId) throws AuthenticationException {
+    public ServiceResult<?> changePassword(ChangePasswordRequest req, String userId) throws AuthenticationException {
         var user = userRepo.findById(userId).orElse(null);
 
         if (user == null) {
-            throw new ServerException("AuthService.changePassword");
+            return ServiceResult.badRequest();
         }
 
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        user.getUsername(),
-                        req.getOldPassword()
-                )
-        );
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            user.getUsername(),
+                            req.getOldPassword()
+                    )
+            );
+        } catch (AuthenticationException e) {
+            return ServiceResult.badRequest();
+        }
+
 
         user.setPassword(passwordEncoder.encode(req.getNewPassword()));
 
         userRepo.save(user);
+
+        String email = userRepo.getEmailById(userId).getEmail();
+        emailSender.send(email, "Password has been changed on " + LocalDateTime.now());
+
+        return ServiceResult.ok(null);
     }
 
     public ServiceResult<AuthorResponse> authorWorkspace(AuthorRequest req) {

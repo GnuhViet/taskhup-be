@@ -67,6 +67,12 @@ app:
   jwt-alg: HS256 #RSA #HS256
   rsa-key-length: 2048
 
+  cloud:
+    cloudinary:
+        cloud-name: dhqx90jaa
+        api-key: 451868283958682
+        api-secret: VIK9IqlWmda8a68dUyEqwcbbmzU
+
   auth:
     white-list: >
       /actuator/**,
@@ -81,7 +87,7 @@ app:
       /configuration/security,
       /webjars/**,
       /v3/api-docs/**,
-      /swagger-ui/**
-
+      /swagger-ui/**,
+      /api/v1/file/**
     auth-list: >
       /api/v1/workspaces/**

@@ -2,6 +2,7 @@ package com.taskhub.project.core.workspace;
 
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authorization.constans.Action;
+import com.taskhub.project.core.invite.InviteLinkService;
 import com.taskhub.project.core.workspace.domain.WorkSpaceMember;
 import com.taskhub.project.core.workspace.domain.WorkSpaceMemberKey;
 import com.taskhub.project.core.board.repo.BoardRepo;
@@ -42,6 +43,11 @@ public class WorkSpaceService {
     public ServiceResult<?> getWorkSpaceMembers(String id) {
         return ServiceResult
                 .ok(workSpaceMemberRepo.getWorkspaceMember(id)); // test api da viet
+    }
+
+    public ServiceResult<?> getWorkSpaceMemberWaiting(String id) {
+        return ServiceResult
+                .ok(workSpaceMemberRepo.getJoinRequestMember(id)); // test api da viet
     }
 
     @Getter
@@ -119,5 +125,28 @@ public class WorkSpaceService {
 
     public ServiceResult<SimpleBoardDto> getUserWorkSpaceBoards(String userId, String workspaceId) {
         return null;
+    }
+
+    public ServiceResult<?> acceptWorkspaceMember(List<String> userIds, String workspaceIds) {
+        for (String userId : userIds) {
+            var member = workSpaceMemberRepo.findByWorkspaceIdAndUserId(workspaceIds, userId);
+            if (member.isEmpty()) {
+                return ServiceResult.notFound();
+            }
+            member.get().setInviteStatus((InviteLinkService.MemberStatus.ACCEPTED.value));
+            workSpaceMemberRepo.save(member.get());
+        }
+        return ServiceResult.ok(userIds);
+    }
+
+    public ServiceResult<?> denyWorkspaceMember(List<String> userIds, String workspaceIds) {
+        for (String userId : userIds) {
+            var member = workSpaceMemberRepo.findByWorkspaceIdAndUserId(workspaceIds, userId);
+            if (member.isEmpty()) {
+                return ServiceResult.notFound();
+            }
+            workSpaceMemberRepo.delete(member.get());
+        }
+        return ServiceResult.ok(userIds);
     }
 }

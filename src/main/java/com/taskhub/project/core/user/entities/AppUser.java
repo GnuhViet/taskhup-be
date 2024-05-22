@@ -29,6 +29,11 @@ public class AppUser {
     @Column(unique = true)
     private String phoneNumber;
 
+    private String avatar;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     // @ManyToOne(fetch =  FetchType.LAZY)
     // @JoinColumn(name = "role_id")
     // private Role roles;
@@ -53,6 +58,22 @@ public class AppUser {
 
     public interface AppUserEmail {
         String getEmail();
+    }
+
+    public interface AppUserInfo {
+        String getUsername();
+        String getEmail();
+        String getFullName();
+        String getPhoneNumber();
+        String getBio();
+        String getAvatar();
+        Boolean getVerify();
+    }
+
+    public interface AppUserEmailInfo {
+        String getEmail();
+        Boolean getConfirmStatus();
+        Boolean getVerify();
     }
 }
 

@@ -44,7 +44,22 @@ public interface WorkSpaceMemberRepo extends JpaRepository<WorkSpaceMember, Work
         from workspace_member wm
             join app_user u on wm.user_id = u.id
         where wm.workspace_id = :workspaceId
-        and wm.invite_status = 'ACCEPTED'
+        and (wm.invite_status = 'ACCEPTED' or wm.invite_status IS NULL)
     """, nativeQuery = true)
     List<WorkSpaceMember.WorkspaceMemberDetails> getWorkspaceMember(String workspaceId);
+
+    @Query(value = """
+        select
+            wm.role_id as `roleId`,
+            wm.workspace_id as `workspaceId`,
+            u.id as `userId`,
+            u.username as `userName`,
+            u.full_name as `fullName`,
+            wm.join_date as `joinDate`
+        from workspace_member wm
+            join app_user u on wm.user_id = u.id
+        where wm.workspace_id = :workspaceId
+        and wm.invite_status = 'WAITING'
+    """, nativeQuery = true)
+    List<WorkSpaceMember.WorkspaceMemberDetails> getJoinRequestMember(String workspaceId);
 }

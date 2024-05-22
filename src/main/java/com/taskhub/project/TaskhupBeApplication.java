@@ -1,5 +1,6 @@
 package com.taskhub.project;
 
+import com.taskhub.project.core.auth.authorization.ActionRepo;
 import com.taskhub.project.core.board.domain.Board;
 import com.taskhub.project.core.user.UserService;
 import com.taskhub.project.core.user.constans.UserStatus;
@@ -31,8 +32,9 @@ public class TaskhupBeApplication {
 
     @Bean
     @Transactional
-    CommandLineRunner run(UserRepo userRepo
-                          ) {
+    CommandLineRunner run(
+            UserRepo userRepo
+    ) {
         return args -> {
 
             if (userRepo.existByUsername("string")) {
