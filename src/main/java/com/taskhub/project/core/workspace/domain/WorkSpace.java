@@ -24,7 +24,10 @@ public class WorkSpace {
     private LocalDateTime createDate;
 
     private String ownerId;
-    // private String memberIds;
+
+    private String website;
+
+    private String avatarId;
 
     @OneToMany(
             fetch = FetchType.LAZY,
@@ -41,5 +44,14 @@ public class WorkSpace {
 
     public interface IdOnly {
         String getId();
+    }
+
+    public interface WorkSpaceInfo {
+        String getId();
+        String getTitle();
+        String getDescription();
+        String getOwnerName();
+        String getWebsite();
+        String getAvatarUrl();
     }
 }

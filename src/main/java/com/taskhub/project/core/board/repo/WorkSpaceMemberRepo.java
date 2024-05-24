@@ -40,9 +40,11 @@ public interface WorkSpaceMemberRepo extends JpaRepository<WorkSpaceMember, Work
             u.id as `userId`,
             u.username as `userName`,
             u.full_name as `fullName`,
-            wm.join_date as `joinDate`
+            wm.join_date as `joinDate`,
+            fi.url as `avatarUrl`
         from workspace_member wm
             join app_user u on wm.user_id = u.id
+            join file_info fi on u.avatar = fi.id
         where wm.workspace_id = :workspaceId
         and (wm.invite_status = 'ACCEPTED' or wm.invite_status IS NULL)
     """, nativeQuery = true)

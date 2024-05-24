@@ -1,7 +1,10 @@
 package com.taskhub.project.core.workspace;
 
+import com.taskhub.project.aspect.exception.model.ErrorsData;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authorization.constans.Action;
+import com.taskhub.project.core.file.FileService;
+import com.taskhub.project.core.file.domain.FileInfo;
 import com.taskhub.project.core.invite.InviteLinkService;
 import com.taskhub.project.core.workspace.domain.WorkSpaceMember;
 import com.taskhub.project.core.workspace.domain.WorkSpaceMemberKey;
@@ -17,18 +20,21 @@ import com.taskhub.project.core.workspace.dto.SimpleWorkSpaceDto;
 import com.taskhub.project.core.workspace.model.GetWorkSpaceResp;
 import com.taskhub.project.core.workspace.model.WorkSpaceCreateReq;
 import com.taskhub.project.core.workspace.model.WorkSpaceCreateResp;
+import com.taskhub.project.core.workspace.model.WorkSpaceUpdateInfoRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@AllArgsConstructor
 @Transactional
 public class WorkSpaceService {
     private final ValidatorService validator;
@@ -39,6 +45,27 @@ public class WorkSpaceService {
     private final WorkSpaceRepo workSpaceRepo;
     private final BoardRepo boardRepo;
     private final WorkSpaceMemberRepo workSpaceMemberRepo;
+    private final FileService fileService;
+
+    public WorkSpaceService(
+            ValidatorService validator,
+            ModelMapper mapper,
+            UserRepo userRepo,
+            RoleRepo roleRepo,
+            WorkSpaceRepo workSpaceRepo,
+            BoardRepo boardRepo,
+            WorkSpaceMemberRepo workSpaceMemberRepo,
+            @Qualifier("cloudinaryFileService") FileService fileService
+    ) {
+        this.validator = validator;
+        this.mapper = mapper;
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.workSpaceRepo = workSpaceRepo;
+        this.boardRepo = boardRepo;
+        this.workSpaceMemberRepo = workSpaceMemberRepo;
+        this.fileService = fileService;
+    }
 
     public ServiceResult<?> getWorkSpaceMembers(String id) {
         return ServiceResult
@@ -48,6 +75,59 @@ public class WorkSpaceService {
     public ServiceResult<?> getWorkSpaceMemberWaiting(String id) {
         return ServiceResult
                 .ok(workSpaceMemberRepo.getJoinRequestMember(id)); // test api da viet
+    }
+
+    public ServiceResult<?> getWorkSpaceInfo(String workspaceId) {
+        return ServiceResult
+                .ok(workSpaceRepo.getWorkSpaceInfo(workspaceId));
+    }
+
+    public ServiceResult<?> updateWorkSpaceAvatar(MultipartFile file, String workspaceId) {
+        var workSpace = workSpaceRepo.findById(workspaceId).orElse(null);
+
+        if (workSpace == null) {
+            return ServiceResult.notFound();
+        }
+
+        var oldAvatar = workSpace.getAvatarId();
+        if (oldAvatar != null) {
+            var resp = fileService.deleteFile(oldAvatar);
+            if (!fileService.isDeleteSuccess(resp)) {
+                return ServiceResult.error("Internal server error: Failed to delete old avatar");
+            }
+        }
+
+        var fileInfo = fileService.uploadFile(file);
+        if (!fileService.isUploadSuccess(fileInfo)) {
+            return ServiceResult.error("Internal server error: Failed to upload avatar");
+        }
+
+        workSpace.setAvatarId(((FileInfo) fileInfo.getData()).getId());
+
+        workSpaceRepo.save(workSpace);
+        return ServiceResult.ok("Avatar updated successfully");
+    }
+
+    public ServiceResult<?> updateWorkSpaceInfo(WorkSpaceUpdateInfoRequest request, String workspaceId) {
+        final WorkSpace[] workSpaceDb = new WorkSpace[1];
+
+        validator.tryValidate(request)
+                .withConstraint(
+                        () -> {
+                            workSpaceDb[0] = workSpaceRepo.findById(workspaceId).orElse(null);
+                            return workSpaceDb[0] == null;
+                        },
+                        ErrorsData.of("Workspace not found", "04", workspaceId)
+                )
+                .throwIfFails();
+
+        var workSpace = workSpaceDb[0];
+        workSpace.setTitle(request.getTitle());
+        workSpace.setDescription(request.getDescription());
+        workSpace.setWebsite(request.getWebsite());
+
+        workSpaceRepo.save(workSpace);
+        return ServiceResult.ok("Workspace updated successfully");
     }
 
     @Getter
@@ -77,6 +157,7 @@ public class WorkSpaceService {
                 .role(role)
                 .workspace(workSpace)
                 .joinDate(LocalDateTime.now())
+                .inviteStatus(InviteLinkService.MemberStatus.ACCEPTED.value)
                 .build();
 
         workSpaceMemberRepo.save(member);

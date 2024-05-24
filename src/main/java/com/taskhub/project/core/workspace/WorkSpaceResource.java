@@ -1,9 +1,9 @@
 package com.taskhub.project.core.workspace;
 
 import com.taskhub.project.common.Constants;
-import com.taskhub.project.core.auth.authorization.model.RoleAddMemberReq;
 import com.taskhub.project.core.workspace.model.JoinRequestADRequest;
 import com.taskhub.project.core.workspace.model.WorkSpaceCreateReq;
+import com.taskhub.project.core.workspace.model.WorkSpaceUpdateInfoRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 
@@ -24,6 +25,33 @@ public class WorkSpaceResource {
     @Operation(summary = "Create new workspace", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> createWorkSpace(@RequestBody WorkSpaceCreateReq workSpace, Principal principal) {
         var response = workSpaceService.createWorkSpace(workSpace, principal.getName());
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @GetMapping("/info")
+    @Operation(summary = "Get workspace info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getWorkSpaceInfo(Authentication authentication) {
+        var response = workSpaceService.getWorkSpaceInfo(String.valueOf(authentication.getCredentials()));
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured({Constants.ActionString.EDIT_WORKSPACE})
+    @PostMapping("/update-avatar")
+    @Operation(summary = "Update workspace avatar", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> updateWorkSpaceAvatar(
+            @RequestParam("file") MultipartFile file,
+            Authentication authentication
+    ) {
+        var response = workSpaceService.updateWorkSpaceAvatar(file, String.valueOf(authentication.getCredentials()));
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @PostMapping("/update-info")
+    public ResponseEntity<?> updateWorkSpaceInfo(
+            @RequestBody WorkSpaceUpdateInfoRequest request,
+            Authentication authentication
+    ) {
+        var response = workSpaceService.updateWorkSpaceInfo(request, String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 

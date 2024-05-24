@@ -43,5 +43,6 @@ public class WorkSpaceMember {
         String getUserName();
         String getFullName();
         LocalDateTime getJoinDate();
+        String getAvatarUrl();
     }
 }

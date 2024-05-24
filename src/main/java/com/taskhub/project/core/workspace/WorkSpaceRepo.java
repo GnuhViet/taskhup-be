@@ -11,29 +11,28 @@ import java.util.Optional;
 public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
 
     @Query(value = """
-            (
-            SELECT ws.id AS id,
+            (SELECT ws.id AS id,
                    ws.title AS title,
                    COUNT(wm.user_id) AS userCount,
                    'JOINED' AS type
             FROM work_space ws
                      JOIN taskhup.workspace_member wm ON ws.id = wm.workspace_id
             WHERE ws.id in (SELECT workspace_id
-                            FROM taskhup.workspace_member
-                            WHERE user_id = :userId )
+                            FROM taskhup.workspace_member wm1
+                            WHERE user_id = :userId
+                            AND wm1.invite_status = 'ACCEPTED')
             GROUP BY ws.id, ws.title, type, ws.create_date
             ORDER BY ws.create_date DESC
-            ) UNION ALL (
+                ) UNION ALL (
             SELECT ws.id AS id,
-                   ws.title AS title,
-                   0 AS userCount,
-                   'GUEST' AS 'type'
+                ws.title AS title,
+                0 AS userCount,
+                'GUEST' AS 'type'
             FROM board_guest bg
-                     join board b on bg.board_id = b.id
-                     join work_space ws on b.workspace_id = ws.id
+                join board b on bg.board_id = b.id
+                join work_space ws on b.workspace_id = ws.id
             WHERE bg.user_id = :userId
-            ORDER BY bg.join_date DESC
-            )
+            ORDER BY bg.join_date DESC)
             """,
             nativeQuery = true
     )
@@ -60,4 +59,19 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
         where b.id = :boardId
     """, nativeQuery = true)
     WorkSpace.IdOnly getWorkSpaceIdByBoardId(String boardId);
+
+
+    @Query(value = """
+        select
+            ws.id as id,
+            ws.title as title,
+            ws.description as description,
+            (select u.username from app_user u where u.id = ws.owner_id) as ownerName,
+            ws.website as website,
+            fi.url as avatarUrl
+        from work_space ws
+            left join file_info fi on ws.avatar_id = fi.id
+        where ws.id = :workSpaceId
+    """, nativeQuery = true)
+    WorkSpace.WorkSpaceInfo getWorkSpaceInfo(String workSpaceId);
 }

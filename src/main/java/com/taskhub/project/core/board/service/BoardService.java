@@ -20,6 +20,7 @@ import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -177,7 +178,9 @@ public class BoardService {
         var toColumn = boardColumnRepo.findById(req.getToColumnId()).orElseThrow(() -> new RuntimeException("Column not found"));
         var card = boardCardRepo.findById(req.getCardId()).orElseThrow(() -> new RuntimeException("Card not found"));
 
-        var toColumCardOrderList = Arrays.asList(toColumn.getCardOrderIds().split(","));
+        var toColumCardOrderList = StringUtils.isBlank(toColumn.getCardOrderIds())
+                ? List.of()
+                : Arrays.asList(toColumn.getCardOrderIds().split(","));
         var requestCardOrderList = req.getCardOrderIds().stream().filter(cardId -> !req.getCardId().equals(cardId)).toList();
 
         if (!fromColumn.getCardOrderIds().contains(req.getCardId())) {

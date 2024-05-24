@@ -43,7 +43,7 @@ public class RoleApi {
     }
 
     @GetMapping
-    @Operation(summary = "Create a role", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get ws role", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getRole(Authentication authentication) {
         var resp = roleService.getRole(String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(resp, resp.getHttpStatus());
