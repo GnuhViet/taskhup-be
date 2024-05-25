@@ -1,6 +1,7 @@
 package com.taskhub.project.core.workspace;
 
 import com.taskhub.project.common.Constants;
+import com.taskhub.project.core.workspace.model.DisabledMemberRequest;
 import com.taskhub.project.core.workspace.model.JoinRequestADRequest;
 import com.taskhub.project.core.workspace.model.WorkSpaceCreateReq;
 import com.taskhub.project.core.workspace.model.WorkSpaceUpdateInfoRequest;
@@ -92,6 +93,14 @@ public class WorkSpaceResource {
     @Operation(summary = "get workspace member", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> denyWorkspaceMember(@RequestBody JoinRequestADRequest req, Authentication authentication) {
         var response = workSpaceService.denyWorkspaceMember(req.getUserIds(), String.valueOf(authentication.getCredentials()));
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.MANAGE_USER)
+    @PostMapping("/disabled-member")
+    @Operation(summary = "disabled workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> denyWorkspaceMember(@RequestBody DisabledMemberRequest req, Authentication authentication) {
+        var response = workSpaceService.disableWorkspaceMember(req, String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 }

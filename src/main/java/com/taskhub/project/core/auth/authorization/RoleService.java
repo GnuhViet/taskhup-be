@@ -5,10 +5,7 @@ import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authorization.constans.Action;
 import com.taskhub.project.core.auth.authorization.constans.DefaultRole;
 import com.taskhub.project.core.auth.authorization.domain.Role;
-import com.taskhub.project.core.auth.authorization.model.RoleAddMemberReq;
-import com.taskhub.project.core.auth.authorization.model.RoleCreateReq;
-import com.taskhub.project.core.auth.authorization.model.RoleGetResp;
-import com.taskhub.project.core.auth.authorization.model.RoleUpdateReq;
+import com.taskhub.project.core.auth.authorization.model.*;
 import com.taskhub.project.core.board.repo.BoardGuestRepo;
 import com.taskhub.project.core.board.repo.WorkSpaceMemberRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
@@ -151,5 +148,34 @@ public class RoleService {
 
 
         return ServiceResult.ok(roleRepo.getMemberList(role.getId(), workspaceId).getMember());
+    }
+
+    public ServiceResult<?> changeMemberRole(ChangeMemberRoleRequest req, String workspaceId) {
+        final var dbRole = new Role[1];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            if (DefaultRole.isDefaultRole(req.getRoleId())) {
+                                return false;
+                            }
+                            return !workSpaceRepo.haveRole(workspaceId, req.getRoleId());
+                        },
+                        ErrorsData.of("id", "04", "Role not belong to ws")
+                )
+                .withConstraint(
+                        () -> {
+                            dbRole[0] = roleRepo.findById(req.getRoleId()).orElse(null);
+                            return dbRole[0] == null;
+                        },
+                        ErrorsData.of("id", "04", "Role not found")
+                )
+                .throwIfFails();
+
+        var role = dbRole[0];
+
+        var wsm = workSpaceMemberRepo.findByWorkspaceIdAndUserId(workspaceId, req.getMemberId()).get();
+        wsm.setRole(role);
+
+        return ServiceResult.ok(null);
     }
 }

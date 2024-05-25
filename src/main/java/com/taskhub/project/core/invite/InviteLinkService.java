@@ -4,6 +4,8 @@ import com.taskhub.project.aspect.exception.model.ErrorsData;
 import com.taskhub.project.common.CommonFunction;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authorization.constans.DefaultRole;
+import com.taskhub.project.core.email.EmailSender;
+import com.taskhub.project.core.invite.model.SendEmailInviteLinkReq;
 import com.taskhub.project.core.workspace.domain.BoardGuest;
 import com.taskhub.project.core.workspace.domain.BoardGuestKey;
 import com.taskhub.project.core.workspace.domain.WorkSpaceMember;
@@ -20,14 +22,15 @@ import com.taskhub.project.core.workspace.WorkSpaceRepo;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.CompletableFuture;
 
 
 @Service
-@AllArgsConstructor
 @Transactional
 public class InviteLinkService {
     private final ValidatorService validator;
@@ -40,8 +43,68 @@ public class InviteLinkService {
     private final BoardGuestRepo boardGuestRepo;
     private final UserRepo userRepo;
     private final RoleRepo roleRepo;
+    private final EmailSender emailSender;
+
+    @Value("${app.fe-uri}")
+    private String FE_URI;
 
     private static final long EXPIRE_DAYS = 1;
+
+    public InviteLinkService(
+            ValidatorService validator,
+            ModelMapper mapper,
+            InviteLinkRepo inviteLinkRepo,
+            BoardRepo boardRepo,
+            WorkSpaceRepo workSpaceRepo,
+            WorkSpaceMemberRepo workSpaceMemberRepo,
+            BoardGuestRepo boardGuestRepo,
+            UserRepo userRepo,
+            RoleRepo roleRepo,
+            EmailSender emailSender
+    ) {
+        this.validator = validator;
+        this.mapper = mapper;
+        this.inviteLinkRepo = inviteLinkRepo;
+        this.boardRepo = boardRepo;
+        this.workSpaceRepo = workSpaceRepo;
+        this.workSpaceMemberRepo = workSpaceMemberRepo;
+        this.boardGuestRepo = boardGuestRepo;
+        this.userRepo = userRepo;
+        this.roleRepo = roleRepo;
+        this.emailSender = emailSender;
+    }
+
+    public ServiceResult<?> sendEmailInvite(String userId, SendEmailInviteLinkReq req) {
+        validator.doValidate(req)
+                .withConstraint(
+                        () -> workSpaceRepo
+                                .findById(req.getDestinationId())
+                                .orElse(null) == null,
+                        ErrorsData.of("destinationId", "not.found", "Destination not found")
+                )
+                .withConstraint(
+                        () -> !workSpaceRepo.isWorkSpaceOwner(req.getDestinationId(), userId),
+                        ErrorsData.of("userId", "not.owner", "User not owner")
+                )
+                .throwIfFails();
+
+        var link = createInviteLink(userId, InviteLinkCreateReq.builder()
+                .type(InviteLinkType.WORKSPACE.value)
+                .destinationId(req.getDestinationId())
+                .build()
+        ).getData();
+
+        // TODO send email
+        CompletableFuture.runAsync(() -> {
+            emailSender.send(
+                    req.getEmail(),
+                    req.getContent() +
+                            "\nInvite Link: " + FE_URI + "invite/" + link,
+                    "Workspace invite");
+        });
+
+        return ServiceResult.ok(null);
+    }
 
     @Getter
     public enum InviteLinkType {
@@ -58,7 +121,8 @@ public class InviteLinkService {
     @Getter
     public enum MemberStatus {
         WAITING("WAITING"),
-        ACCEPTED("ACCEPTED");
+        ACCEPTED("ACCEPTED"),
+        DISABLED("DISABLED");
 
         public final String value;
 
@@ -96,7 +160,8 @@ public class InviteLinkService {
                             boolean res;
                             switch (type) {
                                 case WORKSPACE -> res = workSpaceRepo.isWorkSpaceOwner(req.getDestinationId(), userId);
-                                case BOARD -> res = workSpaceRepo.isWorkSpaceOwnerByBoardId(req.getDestinationId(), userId);
+                                case BOARD ->
+                                        res = workSpaceRepo.isWorkSpaceOwnerByBoardId(req.getDestinationId(), userId);
                                 default -> res = true;
                             }
                             return !res;
@@ -159,7 +224,8 @@ public class InviteLinkService {
                             var type = InviteLinkType.valueOf(inviteLink[0].getType().toUpperCase());
                             boolean res;
                             switch (type) {
-                                case WORKSPACE -> res = workSpaceMemberRepo.hasMember(inviteLink[0].getDestinationId(), userId);
+                                case WORKSPACE ->
+                                        res = workSpaceMemberRepo.hasMember(inviteLink[0].getDestinationId(), userId);
                                 case BOARD -> res = boardGuestRepo.hasGuest(inviteLink[0].getDestinationId(), userId);
                                 default -> res = false;
                             }
@@ -213,7 +279,7 @@ public class InviteLinkService {
         return ServiceResult.ok(new InviteLinkCreateReq(link.getType(), link.getDestinationId()));
     }
 
-    //TODO author
+    // TODO author
     public ServiceResult<String> getInviteLink(String userId, String destinationId) {
         // validator.validate()
         //         .withConstraint(

@@ -17,15 +17,11 @@ import com.taskhub.project.core.user.repo.UserRepo;
 import com.taskhub.project.core.workspace.domain.WorkSpace;
 import com.taskhub.project.core.workspace.dto.SimpleBoardDto;
 import com.taskhub.project.core.workspace.dto.SimpleWorkSpaceDto;
-import com.taskhub.project.core.workspace.model.GetWorkSpaceResp;
-import com.taskhub.project.core.workspace.model.WorkSpaceCreateReq;
-import com.taskhub.project.core.workspace.model.WorkSpaceCreateResp;
-import com.taskhub.project.core.workspace.model.WorkSpaceUpdateInfoRequest;
+import com.taskhub.project.core.workspace.model.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,6 +124,25 @@ public class WorkSpaceService {
 
         workSpaceRepo.save(workSpace);
         return ServiceResult.ok("Workspace updated successfully");
+    }
+
+    public ServiceResult<?> disableWorkspaceMember(DisabledMemberRequest req, String workspaceId) {
+        var memberDb = new WorkSpaceMember[2];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            memberDb[0] = workSpaceMemberRepo.findByWorkspaceIdAndUserId(workspaceId, req.getMemberId()).orElse(null);
+                            return memberDb[0] == null;
+                        },
+                        ErrorsData.of("Member not found", "04", req.getMemberId())
+                )
+                .throwIfFails();
+
+        var member = memberDb[0];
+        member.setInviteStatus(InviteLinkService.MemberStatus.DISABLED.value);
+        workSpaceMemberRepo.save(member);
+
+        return ServiceResult.ok(null);
     }
 
     @Getter

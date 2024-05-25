@@ -2,6 +2,7 @@ package com.taskhub.project.core.invite;
 
 import com.taskhub.project.common.Constants;
 import com.taskhub.project.core.invite.model.InviteLinkCreateReq;
+import com.taskhub.project.core.invite.model.SendEmailInviteLinkReq;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,14 @@ public class InviteLinkApi {
     @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getInviteLink(Principal principal, @PathVariable String destinationId) {
         var resp = inviteLinkService.getInviteLink(principal.getName(), destinationId);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.MANAGE_USER)
+    @PostMapping("/send-email")
+    @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> sendEmailInvite(Principal principal, @RequestBody SendEmailInviteLinkReq req) {
+        var resp = inviteLinkService.sendEmailInvite(principal.getName(), req);
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 }

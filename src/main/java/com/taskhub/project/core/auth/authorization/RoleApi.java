@@ -1,6 +1,7 @@
 package com.taskhub.project.core.auth.authorization;
 
 import com.taskhub.project.common.Constants;
+import com.taskhub.project.core.auth.authorization.model.ChangeMemberRoleRequest;
 import com.taskhub.project.core.auth.authorization.model.RoleAddMemberReq;
 import com.taskhub.project.core.auth.authorization.model.RoleCreateReq;
 import com.taskhub.project.core.auth.authorization.model.RoleUpdateReq;
@@ -46,6 +47,15 @@ public class RoleApi {
     @Operation(summary = "Get ws role", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getRole(Authentication authentication) {
         var resp = roleService.getRole(String.valueOf(authentication.getCredentials()));
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+
+    @Secured(Constants.ActionString.EDIT_ROLE)
+    @PostMapping("/change-member-role")
+    @Operation(summary = "Change member role", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> changeMemberRole(@RequestBody ChangeMemberRoleRequest req, Authentication auth) {
+        var resp = roleService.changeMemberRole(req, String.valueOf(auth.getCredentials()));
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 }

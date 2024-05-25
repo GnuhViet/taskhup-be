@@ -40,4 +40,25 @@ public class EmailService implements EmailSender {
             // throw new IllegalAccessException("fail to send email");
         }
     }
+
+    @Override
+    @Async
+    public void send(String to, String email, String subject) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
+
+            helper.setFrom(fromEmail);
+            helper.setSubject(subject);
+            helper.setTo(to);
+            helper.setText(email);
+
+            mailSender.send(mimeMessage);
+
+            log.info("Mail send: " + to);
+        } catch (MessagingException e) {
+            log.error(e.getMessage());
+            // throw new IllegalAccessException("fail to send email");
+        }
+    }
 }

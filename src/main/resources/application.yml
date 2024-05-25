@@ -57,6 +57,7 @@ management:
         include: '*'
 
 app:
+  fe-uri: http://localhost:5173/
   base-uri: http://localhost:8080/
   name: task-hub
   jwt-secret: 413F4428472B4B6250645367566B5970337336763979244226452948404D6351

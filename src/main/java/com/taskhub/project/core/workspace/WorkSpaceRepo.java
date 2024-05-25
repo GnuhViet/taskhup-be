@@ -83,4 +83,12 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
         where ws.id = :workSpaceId and b.id = :boardId
     """, nativeQuery = true)
     boolean haveBoard(String workSpaceId, String boardId);
+
+    @Query(value = """
+        select CASE WHEN COUNT(r.id) > 0 THEN 'true' ELSE 'false' END
+        from work_space ws
+            join role r on ws.id = r.workspace_id
+        where ws.id = :workSpaceId and r.id = :roleId
+    """, nativeQuery = true)
+    boolean haveRole(String workSpaceId, String roleId);
 }
