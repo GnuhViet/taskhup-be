@@ -74,4 +74,13 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
         where ws.id = :workSpaceId
     """, nativeQuery = true)
     WorkSpace.WorkSpaceInfo getWorkSpaceInfo(String workSpaceId);
+
+
+    @Query(value = """
+        select CASE WHEN COUNT(b.id) > 0 THEN 'true' ELSE 'false' END
+        from work_space ws
+            join board b on ws.id = b.workspace_id
+        where ws.id = :workSpaceId and b.id = :boardId
+    """, nativeQuery = true)
+    boolean haveBoard(String workSpaceId, String boardId);
 }

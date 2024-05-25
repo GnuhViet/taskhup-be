@@ -1,7 +1,9 @@
 package com.taskhub.project.aspect.exception;
 
 import com.taskhub.project.aspect.exception.model.ErrorsData;
+import com.taskhub.project.common.Constants;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 
@@ -10,9 +12,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+@Slf4j
 public class ValidateExceptionBuilder {
     @Getter private final List<FieldError> fieldErrors = new ArrayList<>();
     private String message;
+
+    private static final ErrorsData INTERNAL_SERVER_ERROR = new ErrorsData("internal", "INTERNAL_SERVER_ERROR", "Internal server error");
 
     // @Builder
     // public record ErrorsData(String field, String code, String message) {}
@@ -37,8 +42,14 @@ public class ValidateExceptionBuilder {
      * @since 16/04/2024
      */
     public ValidateExceptionBuilder withConstraint(Supplier<Boolean> logic, ErrorsData errorsData) {
-        if (logic.get()) {
-            addFieldError(errorsData);
+        try {
+            if (logic.get()) {
+                addFieldError(errorsData);
+            }
+        } catch (Exception e) {
+            log.error("Error when validate: {}", logic.toString());
+            log.error(e.getMessage(), e);
+            addFieldError(INTERNAL_SERVER_ERROR);
         }
         return this;
     }

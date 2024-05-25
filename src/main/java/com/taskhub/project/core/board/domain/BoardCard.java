@@ -3,6 +3,8 @@ package com.taskhub.project.core.board.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -20,6 +22,18 @@ public class BoardCard {
     private String memberIds;
     private String comments;
     private String attachments;
+
+    @Column(columnDefinition = "TEXT")
+    private String CardLabelValues;
+
+    // map json
+    // fieldId -> value
+    // 1 -> true,false,true,true ( dropdown )
+    // 2 -> 3 (dropdown-option-value-order-selecter)
+    @Column(columnDefinition = "TEXT")
+    private String CustomFieldValue;
+
+    private String templateId;
 
     @ManyToOne
     @JoinColumn(name = "board_column_id")
