@@ -11,12 +11,16 @@ import java.util.Optional;
 public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
 
     @Query(value = """
-            (SELECT ws.id AS id,
+            (SELECT
+                   ws.id AS id,
                    ws.title AS title,
                    COUNT(wm.user_id) AS userCount,
-                   'JOINED' AS type
+                   'JOINED' AS type,
+                   fi.url AS avatarUrl,
+                   (select count(*) from workspace_member wm1 where wm1.workspace_id = ws.id) as memberCount
             FROM work_space ws
                      JOIN taskhup.workspace_member wm ON ws.id = wm.workspace_id
+                     LEFT JOIN file_info fi on ws.avatar_id = fi.id
             WHERE ws.id in (SELECT workspace_id
                             FROM taskhup.workspace_member wm1
                             WHERE user_id = :userId
@@ -27,10 +31,13 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
             SELECT ws.id AS id,
                 ws.title AS title,
                 0 AS userCount,
-                'GUEST' AS 'type'
+                'GUEST' AS 'type',
+                fi.url AS avatarUrl,
+                (select count(*) from board_guest bg where bg.board_id = b.id) as memberCount
             FROM board_guest bg
                 join board b on bg.board_id = b.id
                 join work_space ws on b.workspace_id = ws.id
+                LEFT join file_info fi on ws.avatar_id = fi.id
             WHERE bg.user_id = :userId
             ORDER BY bg.join_date DESC)
             """,

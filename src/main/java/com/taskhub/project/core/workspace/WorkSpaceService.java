@@ -145,6 +145,25 @@ public class WorkSpaceService {
         return ServiceResult.ok(null);
     }
 
+    public ServiceResult<?> activeWorkspaceMember(DisabledMemberRequest req, String workspaceId) {
+        var memberDb = new WorkSpaceMember[2];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            memberDb[0] = workSpaceMemberRepo.findByWorkspaceIdAndUserId(workspaceId, req.getMemberId()).orElse(null);
+                            return memberDb[0] == null;
+                        },
+                        ErrorsData.of("Member not found", "04", req.getMemberId())
+                )
+                .throwIfFails();
+
+        var member = memberDb[0];
+        member.setInviteStatus(InviteLinkService.MemberStatus.ACCEPTED.value);
+        workSpaceMemberRepo.save(member);
+
+        return ServiceResult.ok(null);
+    }
+
     @Getter
     @AllArgsConstructor
     public enum WorkSpaceMemberType {

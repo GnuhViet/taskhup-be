@@ -97,10 +97,18 @@ public class WorkSpaceResource {
     }
 
     @Secured(Constants.ActionString.MANAGE_USER)
-    @PostMapping("/disabled-member")
+    @PostMapping("/disable-member")
     @Operation(summary = "disabled workspace member", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<?> denyWorkspaceMember(@RequestBody DisabledMemberRequest req, Authentication authentication) {
+    public ResponseEntity<?> disableWorkspaceMember(@RequestBody DisabledMemberRequest req, Authentication authentication) {
         var response = workSpaceService.disableWorkspaceMember(req, String.valueOf(authentication.getCredentials()));
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.MANAGE_USER)
+    @PostMapping("/active-member")
+    @Operation(summary = "disabled workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> activeWorkspaceMember(@RequestBody DisabledMemberRequest req, Authentication authentication) {
+        var response = workSpaceService.activeWorkspaceMember(req, String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 }

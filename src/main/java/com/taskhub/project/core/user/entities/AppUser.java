@@ -25,7 +25,7 @@ public class AppUser {
     private String password;
     private String status = UserStatus.Constants.ACTIVE;
     @ColumnDefault("0")
-    private Boolean verify;
+    private Boolean verify = false;
     @Column(unique = true)
     private String phoneNumber;
 

@@ -40,6 +40,8 @@ public class WorkSpace {
         String getTitle();
         int getUserCount();
         String getType();
+        String getAvatarUrl();
+        Long getMemberCount();
     }
 
     public interface IdOnly {
