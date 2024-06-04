@@ -3,6 +3,8 @@ package com.taskhub.project.core.board.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -19,9 +21,11 @@ public class CardCustomField {
     // text, number, date, dropdown, checkbox
 
     private String options;
-        // for dropdown type (color-value)
+        // for dropdown type (color-value,color-value,color-value)
 
     private String title;
+
+    private LocalDateTime createDate;
 
     private String templateId; // belong to which template
 }

@@ -3,6 +3,8 @@ package com.taskhub.project.core.board.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -18,6 +20,8 @@ public class CardLabel {
     private String title;
 
     private String colorCode;
+
+    private LocalDateTime createDate;
 
     private String templateId; // belong to which template
 }

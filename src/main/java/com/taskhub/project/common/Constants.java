@@ -15,4 +15,11 @@ public class Constants {
         public static final String EDIT_CARD_TEMPLATE = "EDIT_CARD_TEMPLATE";
         public static final String EDIT_CARD = "EDIT_CARD";
     }
+
+    public static class CustomFieldTypes {
+        public static final String TEXT = "TEXT";
+        public static final String DATE = "DATE";
+        public static final String CHECKBOX = "CHECKBOX";
+        public static final String DROPDOWN = "DROPDOWN";
+    }
 }
