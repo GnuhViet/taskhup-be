@@ -3,6 +3,7 @@ package com.taskhub.project.core.board.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -19,9 +20,16 @@ public class BoardCard {
     private String title;
     private String description;
     private String cover;
-    private String memberIds;
-    private String comments;
-    private String attachments;
+
+    private LocalDateTime createAt;
+
+    private String createBy;
+
+    private LocalDateTime fromDate;
+
+    private LocalDateTime deadlineDate;
+
+    private Integer workingStatus;
 
     @Column(columnDefinition = "TEXT")
     private String CardLabelValues;
@@ -33,9 +41,27 @@ public class BoardCard {
     @Column(columnDefinition = "TEXT")
     private String CustomFieldValue;
 
+    @Column(columnDefinition = "TEXT")
+    private String CheckListValue;
+
     private String templateId;
 
     @ManyToOne
     @JoinColumn(name = "board_column_id")
     private BoardColumn boardColumn;
+
+    public interface BoardCardDetail {
+        String getId();
+        String getTemplateId();
+        String getTitle();
+        String getColumnId();
+        String getColumnName();
+        String getSelectedLabelsIdRaw();
+        LocalDateTime getFromDate();
+        LocalDateTime getDeadlineDate();
+        Integer getWorkingStatus();
+        String getDescription();
+        String getCheckListsRaw();
+        String getSelectedFieldsValueRaw();
+    }
 }

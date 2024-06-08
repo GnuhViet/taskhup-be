@@ -37,4 +37,16 @@ public interface BoardTemplateRepo extends JpaRepository<BoardCardTemplate, Stri
         where bct.id = :templateId and ws.id = :workspaceId
     """, nativeQuery = true)
     boolean isBelongToWorkSpace(String templateId, String workspaceId);
+
+    @Query(value = """
+        select CASE WHEN COUNT(cl.id) > 0 THEN 'false' ELSE 'true' END
+        from card_label cl where cl.id IN :labelIds and cl.template_id != :templateId
+    """, nativeQuery = true)
+    boolean hasLabel(String templateId, List<String> labelIds);
+
+    @Query(value = """
+        select CASE WHEN COUNT(cf.id) > 0 THEN 'false' ELSE 'true' END
+        from card_custom_field cf where cf.id IN :fieldIds and cf.template_id != :templateId
+    """, nativeQuery = true)
+    boolean hasField(String templateId, List<String> fieldIds);
 }
