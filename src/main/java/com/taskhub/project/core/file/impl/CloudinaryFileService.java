@@ -1,6 +1,7 @@
 package com.taskhub.project.core.file.impl;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
 import com.taskhub.project.core.file.FileService;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -19,22 +21,32 @@ public class CloudinaryFileService implements FileService {
     private final Cloudinary cloudinary;
     private final FileInfoRepo fileInfoRepo;
 
+    public CompletableFuture<ServiceResult<?>> uploadFileAsync(MultipartFile file) {
+        return CompletableFuture.supplyAsync(() -> uploadFile(file));
+    }
+
+    private final static Map DEFAULT_PARAMS = ObjectUtils.asMap(
+            "resource_type", "auto"
+    );
+
     @Transactional
     public ServiceResult<?> uploadFile(MultipartFile file) {
         try {
-            Map data = cloudinary.uploader().upload(file.getBytes(), Map.of());
+            Map data = cloudinary.uploader().upload(file.getBytes(), DEFAULT_PARAMS);
             FileInfo fileInfo = FileInfo.builder()
                     .id((String) data.get("public_id"))
                     .signature((String) data.get("signature"))
                     .format((String) data.get("format"))
                     .resourceType((String) data.get("resource_type"))
                     .url((String) data.get("url"))
+                    .originFileName(file.getOriginalFilename())
+                    .fileSize(file.getSize())
                     .build();
 
             fileInfoRepo.save(fileInfo);
 
             return ServiceResult.ok(fileInfo);
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ServiceResult.error("Failed to upload file: " + e.getMessage());
         }
     }
@@ -42,7 +54,14 @@ public class CloudinaryFileService implements FileService {
     @Transactional
     public ServiceResult<?> deleteFile(String id) {
         try {
-            Map data = cloudinary.uploader().destroy(id, Map.of());
+            var fileInfo = fileInfoRepo.findById(id).orElse(null);
+            if (fileInfo == null) {
+                return ServiceResult.error("File not found");
+            }
+
+            Map data = cloudinary.uploader().destroy(id, ObjectUtils.asMap(
+                    "resource_type", fileInfo.getResourceType()
+            ));
 
             if (!data.get("result").equals("ok")) {
                 return ServiceResult.error("failed");
@@ -50,7 +69,7 @@ public class CloudinaryFileService implements FileService {
 
             fileInfoRepo.deleteById(id);
             return ServiceResult.ok("success");
-        } catch (IOException e) {
+        } catch (Exception e) {
             return ServiceResult.error("Failed to delete file: " + e.getMessage());
         }
     }

@@ -1,8 +1,6 @@
 package com.taskhub.project.core.board.resources.api.model.boardCardDetails;
 
-import com.taskhub.project.core.board.domain.CardCustomField;
 import com.taskhub.project.core.board.dto.CardCustomFieldDetail;
-import com.taskhub.project.core.file.domain.FileInfo;
 import lombok.Builder;
 import lombok.Data;
 
@@ -17,17 +15,18 @@ public class BoardCardDetails {
     private String title;
     private String columnId;
     private String columnName;
+    private String coverUrl;
     private List<BoardCardMemberSimple> members;
     private List<BoardCardSelectedLabel> selectedLabels;
     private Boolean isWatchCard;
-    private LocalDateTime fromDate;
-    private LocalDateTime deadlineDate;
+    private String fromDate;
+    private String deadlineDate;
     private Integer workingStatus;
     private String description;
     private List<BoardCardCheckList> checkLists;
     private List<CardCustomFieldDetail> customFields;
     private List<BoardCardSelectedFields> selectedFieldsValue;
-    private List<FileInfo> attachments;
+    private List<BoardCardAttachment> attachments;
     private List<BoardCardComment> comments;
     private List<BoardCardHistory> activityHistory;
 }

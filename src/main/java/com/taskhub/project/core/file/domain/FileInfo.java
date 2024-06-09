@@ -23,4 +23,8 @@ public class FileInfo {
     private String resourceType;
 
     private String url;
+
+    private String originFileName;
+
+    private Long fileSize;
 }

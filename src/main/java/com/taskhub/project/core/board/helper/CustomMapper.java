@@ -10,6 +10,7 @@ import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 public class CustomMapper {
@@ -20,20 +21,30 @@ public class CustomMapper {
      *   all its columns to columnDto
      *     and cards to cardDto.
      */
-    public static BoardDto deepMapBoard(Board board) {
+    public static BoardDto deepMapBoard(
+            Board board,
+            List<BoardColumn> columns,
+            Map<String, List<BoardCard.BoardCardInfo>> cards
+    ) {
         var boardDto = mapper.map(board, BoardDto.class);
 
-        Function<BoardCard, BoardCardDto> toCardDto = card -> {
+        Function<BoardCard.BoardCardInfo, BoardCardDto> toCardDto = card -> {
             var cardDto = mapper.map(card, BoardCardDto.class);
             cardDto.setBoardId(board.getId());
             return cardDto;
         };
+
         Function<BoardColumn, BoardColumnDto> toColumnDto = (column -> {
             var columnDto = mapper.map(column, BoardColumnDto.class);
-            columnDto.setCards(column.getBoardCards().stream().map(toCardDto).toList());
+            var boardCards = cards.get(column.getId());
+
+            if (boardCards != null) {
+                columnDto.setCards(boardCards.stream().map(toCardDto).toList());
+            }
             return columnDto;
         });
-        boardDto.setColumns(board.getColumns().stream().map(toColumnDto).toList());
+
+        boardDto.setColumns(columns.stream().map(toColumnDto).toList());
 
         return boardDto;
     }

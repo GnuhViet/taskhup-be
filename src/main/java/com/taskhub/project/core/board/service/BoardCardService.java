@@ -3,23 +3,30 @@ package com.taskhub.project.core.board.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskhub.project.aspect.exception.model.ErrorsData;
+import com.taskhub.project.common.CommonFunction;
 import com.taskhub.project.common.Constants;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.domain.*;
+import com.taskhub.project.core.board.dto.CardCustomFieldDetail;
 import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.*;
 import com.taskhub.project.core.board.resources.api.model.boardCardApiModel.*;
 import com.taskhub.project.core.board.resources.api.model.boardCardDetails.*;
+import com.taskhub.project.core.file.domain.FileInfo;
+import com.taskhub.project.core.file.impl.CloudinaryFileService;
 import com.taskhub.project.core.helper.validator.ValidatorService;
+import com.taskhub.project.core.user.entities.AppUser;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -32,7 +39,6 @@ public class BoardCardService {
     private final BoardCardRepo boardCardRepo;
     private final BoardCardMemberRepo boardCardMemberRepo;
     private final BoardTemplateRepo boardTemplateRepo;
-    private final CardHistoryService cardHistoryService;
     private final BoardCardHistoryRepo boardCardHistoryRepo;
     private final CardLabelRepo cardLabelRepo;
     private final CardCustomFieldRepo cardCustomFieldRepo;
@@ -40,15 +46,24 @@ public class BoardCardService {
     private final BoardCardCommentsRepo boardCardCommentsRepo;
     private final BoardCardWatchRepo boardCardWatchRepo;
     private final BoardColumnRepo boardColumnRepo;
+
     private final ModelMapper mapper;
     private final ObjectMapper objectMapper;
 
+    private final CardHistoryService cardHistoryService;
+    private final CloudinaryFileService fileService;
     private final ValidatorService validator;
+
+
+
 
     public static class AttachmentType {
         public static final String CARD_ATTACH = "CARD_ATTACH";
         public static final String COMMENT_ATTACH = "COMMENT_ATTACH";
     }
+
+    public static DateTimeFormatter dateTimeFormater = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    public static DateTimeFormatter dateFormater = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public ServiceResult<?> getCardDetails(String boardCardId, String userId) {
         var boardCardDb = new BoardCard.BoardCardDetail[1];
@@ -73,6 +88,17 @@ public class BoardCardService {
         var allComments = boardCardCommentsRepo.findByCardId(boardCardId);
         var allActivityHistory = boardCardHistoryRepo.findByCardId(boardCardId);
 
+        Map<String, List<BoardCardAttachments.BoardCardAttachmentsInfo>> attachmentMap = allAttachments.stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(BoardCardAttachments.BoardCardAttachmentsInfo::getType));
+
+        List<BoardCardAttachment> cardAttachments = null;
+        if (attachmentMap.containsKey(AttachmentType.CARD_ATTACH)) {
+            cardAttachments = attachmentMap.get(AttachmentType.CARD_ATTACH)
+                    .stream()
+                    .map(m -> mapper.map(m, BoardCardAttachment.class))
+                    .toList();
+        }
 
         List<BoardCardMemberSimple> members = null;
         if (!boardCardMembers.isEmpty()) {
@@ -94,7 +120,6 @@ public class BoardCardService {
             }
         }
 
-
         List<BoardCardCheckList> checkLists = null;
         if (!StringUtils.isBlank(card.getCheckListsRaw())) {
             try {
@@ -107,9 +132,12 @@ public class BoardCardService {
             }
         }
 
-        var cardCustomFieldDetails = cardCustomFields.stream()
-                .map(CustomMapper::toCardCustomFieldDetail)
-                .toList();
+        List<CardCustomFieldDetail> cardCustomFieldDetails = null;
+        if (!cardCustomFields.isEmpty()) {
+            cardCustomFieldDetails = cardCustomFields.stream()
+                    .map(CustomMapper::toCardCustomFieldDetail)
+                    .toList();
+        }
 
         List<BoardCardSelectedFields> cardCustomFieldValue = null;
         if (!StringUtils.isBlank(card.getSelectedFieldsValueRaw())) {
@@ -123,6 +151,47 @@ public class BoardCardService {
             }
         }
 
+        List<BoardCardComments> comments = null;
+        Map<String ,List<BoardCardAttachments.BoardCardAttachmentsInfo>> mapAttachItemByCommentId;
+
+        if (attachmentMap.containsKey(AttachmentType.COMMENT_ATTACH)) {
+            mapAttachItemByCommentId = attachmentMap.get(AttachmentType.COMMENT_ATTACH)
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.groupingBy(BoardCardAttachments.BoardCardAttachmentsInfo::getRefId));
+        } else {
+            mapAttachItemByCommentId = new HashMap<>();
+        }
+
+        List<BoardCardComment> boardCardComments = null;
+        if (!allComments.isEmpty()) {
+            boardCardComments = allComments.stream()
+                    .map(comment -> {
+                        var commentAttachments = mapAttachItemByCommentId.get(comment.getId());
+                        List<BoardCardAttachment> attachments = null;
+                        if (commentAttachments != null) {
+                            attachments = commentAttachments.stream()
+                                    .map(m -> mapper.map(m, BoardCardAttachment.class))
+                                    .toList();
+                        }
+                        return BoardCardComment.builder()
+                                .id(comment.getId())
+                                .content(comment.getContent())
+                                .createAt(comment.getCreateAt())
+                                .createBy(comment.getCreateBy())
+                                .fullName(comment.getFullName())
+                                .username(comment.getUsername())
+                                .avatarUrl(comment.getAvatarUrl())
+                                .editable(comment.getCreateBy().equals(userId))
+                                .attachments(attachments)
+                                .build();
+                    })
+                    .toList();
+        }
+
+        String fromDate = card.getFromDate() != null ? dateFormater.format(card.getFromDate()) : null;
+        String deadlineDate = card.getDeadlineDate() != null ? dateTimeFormater.format(card.getDeadlineDate()) : null;
+
         return ServiceResult.ok(
                 BoardCardDetails.builder()
                         .id(card.getId())
@@ -130,16 +199,19 @@ public class BoardCardService {
                         .title(card.getTitle())
                         .columnId(card.getColumnId())
                         .columnName(card.getColumnName())
+                        .coverUrl(card.getCoverUrl())
                         .members(members)
                         .selectedLabels(selectedLabels)
                         .isWatchCard(isWatchCard)
-                        .fromDate(card.getFromDate())
-                        .deadlineDate(card.getDeadlineDate())
+                        .fromDate(fromDate)
+                        .deadlineDate(deadlineDate)
                         .workingStatus(card.getWorkingStatus())
                         .description(card.getDescription())
                         .checkLists(checkLists)
                         .customFields(cardCustomFieldDetails)
                         .selectedFieldsValue(cardCustomFieldValue)
+                        .attachments(cardAttachments)
+                        .comments(boardCardComments)
                         .build()
         );
     }
@@ -160,6 +232,7 @@ public class BoardCardService {
         var card = boardCardDb[0];
 
         card.setTitle(req.getTitle());
+
         boardCardRepo.save(card);
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
@@ -197,7 +270,8 @@ public class BoardCardService {
                 boardCard.getId(),
                 CardHistoryType.SELECT_TEMPLATE,
                 boardCard.getTemplateId(),
-                req.getTemplateId()
+                req.getTemplateId(),
+                null //TODO
         );
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
@@ -562,6 +636,311 @@ public class BoardCardService {
         } else {
             boardCardWatchRepo.delete(watch);
         }
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateCardCover(UpdateCardCoverReq req) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .withConstraint(
+                        () -> !CommonFunction.isImage(req.getFile()),
+                        ErrorsData.of("file", "05", "File not image")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        var oldCover = card.getCover();
+
+        if (!StringUtils.isBlank(oldCover)) {
+            var resp = fileService.deleteFile(oldCover);
+            if (!fileService.isDeleteSuccess(resp)) {
+                return ServiceResult.error("Internal server error: Failed to delete old avatar");
+            }
+        }
+
+        var fileInfo = fileService.uploadFile(req.getFile());
+
+        if (!fileService.isUploadSuccess(fileInfo)) {
+            return ServiceResult.error("Internal server error: Failed to upload avatar");
+        }
+
+        card.setCover(((FileInfo) fileInfo.getData()).getId());
+
+        boardCardRepo.save(card);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+
+    public ServiceResult<?> updateCardDate(UpdateCardDateRequest req) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        LocalDateTime fd = null;
+        LocalDateTime dd = null;
+
+        try {
+            fd = LocalDate.parse(req.getFromDate(), dateFormater).atStartOfDay();
+            dd = LocalDateTime.parse(req.getDeadlineDate(), dateTimeFormater);
+        } catch (Exception e) {
+            return ServiceResult.error("INTERNAL_SERVER_ERROR");
+        }
+
+        card.setFromDate(fd);
+        card.setDeadlineDate(dd);
+        card.setReminder(req.getReminder());
+
+        boardCardRepo.save(card);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateWorkingStatus(UpdateWorkingStatusReq req) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        card.setWorkingStatus(
+                req.getWorkingStatus() ? 1 : null
+        );
+
+        boardCardRepo.save(card);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateDescription(UpdateDescriptionReq req) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        card.setDescription(req.getDescription());
+
+        boardCardRepo.save(card);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+
+    public ServiceResult<?> uploadAttachment(
+            MultipartFile file,
+            UploadAttachmentRequest req,
+            String userId
+    ) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> file == null || file.isEmpty(),
+                        ErrorsData.of("file", "05", "File is required")
+                )
+                .withConstraint(
+                        () -> {
+                            if (req.getType().equals(AttachmentType.CARD_ATTACH)) {
+                                boardCardDb[0] = boardCardRepo.findById(req.getRefId()).orElse(null);
+                                return boardCardDb[0] == null;
+                            } else {
+                                return false;
+                            }
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var fileInfo = fileService.uploadFile(file);
+
+        if (!fileService.isUploadSuccess(fileInfo)) {
+            return ServiceResult.error("Internal server error: Failed to upload avatar");
+        }
+
+        var attachment = BoardCardAttachments.builder()
+                .type(req.getType())
+                .refId(req.getRefId())
+                .fileId(((FileInfo) fileInfo.getData()).getId())
+                .uploadBy(userId)
+                .uploadAt(LocalDateTime.now())
+                .displayName(req.getDisplayName())
+                .build();
+
+        boardCardAttachmentsRepo.save(attachment);
+
+        // CompletableFuture<ServiceResult<?>> future = fileService.uploadFileAsync(file);
+        //
+        // future.thenAccept(result -> {
+        //     if (!fileService.isUploadSuccess(result)) {
+        //         // Handle error
+        //     } else {
+        //         FileInfo fileInfo = (FileInfo) result.getData();
+        //         var attachment = BoardCardAttachments.builder()
+        //                 .type(req.getType())
+        //                 .refId(req.getRefId())
+        //                 .fileId(fileInfo.getId())
+        //                 .uploadBy(userId)
+        //                 .uploadAt(LocalDateTime.now())
+        //                 .displayName(req.getDisplayName())
+        //                 .build();
+        //
+        //         boardCardAttachmentsRepo.save(attachment);
+        //     }
+        // });
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> deleteAttachment(DeleteAttachmentReq request, String userId) {
+        var attachmentDB = new BoardCardAttachments[1];
+        validator.tryValidate(request)
+                .withConstraint(
+                        () -> {
+                            attachmentDB[0] = boardCardAttachmentsRepo.findById(request.getAttachmentId()).orElse(null);
+                            return attachmentDB[0] == null;
+                        },
+                        ErrorsData.of("attachmentId", "04", "Attachment not found")
+                )
+                .throwIfFails();
+
+        var attachment = attachmentDB[0];
+
+
+        if (attachment.getType().equals(AttachmentType.COMMENT_ATTACH)) {
+            if (!attachment.getUploadBy().equals(userId)) {
+                return ServiceResult.error("INVALID_USER");
+            }
+        }
+
+        var resp = fileService.deleteFile(attachment.getFileId());
+        if (!fileService.isDeleteSuccess(resp)) {
+            return ServiceResult.error("Internal server error: Failed to delete old avatar");
+        }
+
+        boardCardAttachmentsRepo.delete(attachment);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> createComment(CreateCommentReq req, String userId) {
+        var boardCardDb = new BoardCard[1];
+
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        var comment = BoardCardComments.builder()
+                .boardCardId(req.getBoardCardId())
+                .content(req.getContent())
+                .createBy(userId)
+                .createAt(LocalDateTime.now())
+                .build();
+
+        boardCardCommentsRepo.save(comment);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> editCommentContent(EditCommentContentReq req, String userId) {
+        var commentDB = new BoardCardComments[1];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            commentDB[0] = boardCardCommentsRepo.findById(req.getId()).orElse(null);
+                            return commentDB[0] == null;
+                        },
+                        ErrorsData.of("commentId", "04", "Comment not found")
+                )
+                .throwIfFails();
+
+        var comment = commentDB[0];
+
+        if (!comment.getCreateBy().equals(userId)) {
+            return ServiceResult.error("INVALID_USER");
+        }
+
+        comment.setContent(req.getContent());
+
+        boardCardCommentsRepo.save(comment);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> deleteComment(DeleteCommentReq req, String userId) {
+        var commentDB = new BoardCardComments[1];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            commentDB[0] = boardCardCommentsRepo.findById(req.getId()).orElse(null);
+                            return commentDB[0] == null;
+                        },
+                        ErrorsData.of("commentId", "04", "Comment not found")
+                )
+                .throwIfFails();
+
+        var comment = commentDB[0];
+
+        if (!comment.getCreateBy().equals(userId)) {
+            return ServiceResult.error("INVALID_USER");
+        }
+
+        var attachments = boardCardAttachmentsRepo.getByCommentId(comment.getId());
+
+        // xoa attachment
+        for (var attachment : attachments) {
+            var resp = fileService.deleteFile(attachment.getFileId());
+            if (!fileService.isDeleteSuccess(resp)) {
+                return ServiceResult.error("Internal server error: Failed to delete old avatar");
+            }
+        }
+
+        boardCardAttachmentsRepo.deleteAll(attachments);
+        boardCardCommentsRepo.delete(comment);
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }

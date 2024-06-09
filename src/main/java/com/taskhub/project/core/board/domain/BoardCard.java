@@ -18,8 +18,11 @@ public class BoardCard {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String title;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
-    private String cover;
+
+    private String cover; // link to bang file_info
 
     private LocalDateTime createAt;
 
@@ -28,6 +31,8 @@ public class BoardCard {
     private LocalDateTime fromDate;
 
     private LocalDateTime deadlineDate;
+
+    private Integer reminder;
 
     private Integer workingStatus;
 
@@ -50,12 +55,20 @@ public class BoardCard {
     @JoinColumn(name = "board_column_id")
     private BoardColumn boardColumn;
 
+    public interface BoardCardInfo {
+        String getId();
+        String getTitle();
+        String getCover();
+        String getColumnId();
+    }
+
     public interface BoardCardDetail {
         String getId();
         String getTemplateId();
         String getTitle();
         String getColumnId();
         String getColumnName();
+        String getCoverUrl();
         String getSelectedLabelsIdRaw();
         LocalDateTime getFromDate();
         LocalDateTime getDeadlineDate();

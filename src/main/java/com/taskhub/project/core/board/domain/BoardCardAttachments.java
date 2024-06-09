@@ -3,6 +3,8 @@ package com.taskhub.project.core.board.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -17,7 +19,29 @@ public class BoardCardAttachments {
 
     private String type;
 
-    private String ref_id;
+    private String refId;
 
-    private String file_id;
+    private String fileId;
+
+    private String uploadBy;
+
+    private LocalDateTime uploadAt;
+
+    private String displayName;
+
+    public interface BoardCardAttachmentsInfo {
+        String getId();
+        String getType();
+        String getRefId();
+        String getFileId();
+        String getUploadBy();
+        LocalDateTime getUploadAt();
+        String getDisplayName();
+
+        Long getFileSize();
+        String getOriginFileName();
+        String getFormat();
+        String getDownloadUrl();
+        String getResourceType();
+    }
 }

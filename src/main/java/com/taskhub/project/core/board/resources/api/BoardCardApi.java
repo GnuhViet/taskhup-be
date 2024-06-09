@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
 
@@ -119,6 +120,110 @@ public class BoardCardApi {
             @RequestBody UpdateCheckListValueReq request
     ) {
         var response = service.updateCheckListValue(request);
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @PostMapping("/update-cover")
+    public ResponseEntity<?> updateCover(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("boardCardId") String boardCardId
+    ) {
+        var response = service.updateCardCover(UpdateCardCoverReq.builder()
+                .boardCardId(boardCardId)
+                .file(file)
+                .build()
+        );
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/update-card-date")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> updateCardDate(
+            @RequestBody UpdateCardDateRequest request
+    ) {
+        var response = service.updateCardDate(request);
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/update-working-status")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> updateWorkingStatus(
+            @RequestBody UpdateWorkingStatusReq request
+    ) {
+        var response = service.updateWorkingStatus(request);
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/update-description")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> updateDescription(
+            @RequestBody UpdateDescriptionReq request
+    ) {
+        var response = service.updateDescription(request);
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @PostMapping("/upload-attachment")
+    public ResponseEntity<?> uploadAttachment(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("displayName") String displayName,
+            @RequestParam("type") String type,
+            @RequestParam("refId") String refId,
+            Principal principal
+    ) {
+        var response = service.uploadAttachment(
+                file,
+                UploadAttachmentRequest.builder()
+                        .displayName(displayName)
+                        .type(type)
+                        .refId(refId)
+                        .build()
+                ,
+                principal.getName()
+        );
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @PostMapping("/delete-upload-attachment")
+    public ResponseEntity<?> deleteAttachment(@RequestBody DeleteAttachmentReq request, Principal principal) {
+        var response = service.deleteAttachment(request, principal.getName());
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/create-comment")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> createComment(
+            @RequestBody CreateCommentReq request,
+            Principal principal
+    ) {
+        var response = service.createComment(request, principal.getName());
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/edit-comment-content")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> editCommentContent(
+            @RequestBody EditCommentContentReq request,
+            Principal principal
+    ) {
+        var response = service.editCommentContent(request, principal.getName());
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_CARD)
+    @PostMapping("/delete-comment")
+    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> deleteComment(
+            @RequestBody DeleteCommentReq request,
+            Principal principal
+    ) {
+        var response = service.deleteComment(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 }

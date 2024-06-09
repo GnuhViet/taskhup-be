@@ -23,7 +23,8 @@ public class CardHistoryService {
             String cardId,
             CardHistoryType type,
             String fromData,
-            String toData
+            String toData,
+            String userId
     ) {
 
         var cardHistory = BoardCardHistory.builder()
@@ -32,6 +33,7 @@ public class CardHistoryService {
                 .fromData(fromData)
                 .toData(toData)
                 .createdAt(LocalDateTime.now())
+                .createdBy(userId)
                 .build();
 
 

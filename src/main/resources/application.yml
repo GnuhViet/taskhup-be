@@ -15,7 +15,10 @@ spring:
 #        format_sql: true
 #  profiles:
 #    active: h2
-
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 25MB
   mail:
     host: smtp.gmail.com
     port: 587

@@ -17,6 +17,7 @@ public class BoardCardComments {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     private LocalDateTime createAt;
@@ -24,4 +25,14 @@ public class BoardCardComments {
     private String createBy; // ref app_user_id
 
     private String boardCardId; // ref board_card_id
+
+    public interface BoardCardCommentDetail {
+        String getId();
+        String getContent();
+        LocalDateTime getCreateAt();
+        String getCreateBy();
+        String getFullName();
+        String getUsername();
+        String getAvatarUrl();
+    }
 }

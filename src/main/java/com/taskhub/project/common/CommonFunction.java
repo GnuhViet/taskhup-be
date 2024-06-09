@@ -1,5 +1,7 @@
 package com.taskhub.project.common;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -32,5 +34,10 @@ public class CommonFunction {
             sb.append(SOURCE.charAt(RANDOM.nextInt(SOURCE.length())));
         }
         return sb.toString();
+    }
+
+    public static boolean isImage(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && contentType.startsWith("image/");
     }
 }

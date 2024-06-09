@@ -16,6 +16,7 @@ import com.taskhub.project.core.board.resources.api.model.BoardCreateResp;
 import com.taskhub.project.core.board.resources.api.model.GetAllBoardResp;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
+import com.taskhub.project.core.file.FileInfoRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
 import jakarta.transaction.Transactional;
@@ -38,7 +39,10 @@ public class BoardService {
     private final BoardColumnRepo boardColumnRepo;
     private final BoardCardRepo boardCardRepo;
     private final WorkSpaceRepo workSpaceRepo;
+    private final FileInfoRepo fileInfoRepo;
+
     private final ValidatorService validator;
+
     private final ModelMapper mapper;
 
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
@@ -63,7 +67,19 @@ public class BoardService {
 
     public BoardDto getBoard(String boardId) {
         var board = boardRepo.findById(boardId).orElseThrow();
-        return CustomMapper.deepMapBoard(board);
+        var boardColumns = boardColumnRepo.findByBoardId(boardId);
+        var boardCards = boardCardRepo.findByListColumnId(
+                boardColumns.stream().map(BoardColumn::getId).toList()
+        );
+
+        var mapBoardCardsByColumnId = boardCards.stream()
+                .collect(Collectors.groupingBy(BoardCard.BoardCardInfo::getColumnId));
+
+        return CustomMapper.deepMapBoard(
+                board,
+                boardColumns,
+                mapBoardCardsByColumnId
+        );
     }
 
     public ServiceResult<List<GetAllBoardResp>> getAllBoard() {

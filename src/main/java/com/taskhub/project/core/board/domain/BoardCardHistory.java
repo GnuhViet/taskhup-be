@@ -26,4 +26,6 @@ public class BoardCardHistory {
     private String type;
 
     private LocalDateTime createdAt;
+
+    private String createdBy;
 }

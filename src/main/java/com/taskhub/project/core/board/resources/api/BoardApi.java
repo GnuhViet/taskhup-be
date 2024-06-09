@@ -5,6 +5,7 @@ import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.service.BoardStarService;
+import com.taskhub.project.core.file.FileInfoRepo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
