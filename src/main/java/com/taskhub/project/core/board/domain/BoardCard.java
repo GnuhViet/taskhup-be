@@ -59,6 +59,14 @@ public class BoardCard {
         String getId();
         String getTitle();
         String getCover();
+        String getSelectedLabelsId();
+        LocalDateTime getFromDate();
+        LocalDateTime getDeadlineDate();
+        Integer getWorkingStatus();
+        Integer getIsWatchCard();
+        Integer getCommentCount();
+        Integer getAttachmentCount();
+        String getCheckListsItems();
         String getColumnId();
     }
 

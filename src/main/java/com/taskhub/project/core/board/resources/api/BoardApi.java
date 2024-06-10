@@ -35,8 +35,11 @@ public class BoardApi {
 
     @Operation(summary = "get single board", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/{boardId}")
-    public BoardDto getBoard(@PathVariable String boardId) {
-        return boardService.getBoard(boardId);
+    public BoardDto getBoard(
+            @PathVariable String boardId,
+            Principal principal
+    ) {
+        return boardService.getBoard(boardId, principal.getName());
     }
 
     //TODO do validate role!!!!!

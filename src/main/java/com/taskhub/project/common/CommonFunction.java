@@ -2,14 +2,16 @@ package com.taskhub.project.common;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class CommonFunction {
-    public static boolean isTheSameList(List list1, List list2) {
-        var set1 = Set.of(list1);
-        var set2 = Set.of(list2);
+    public static boolean isTheSameList(List<String> list1, List<String> list2) {
+        var set1 = new HashSet<>(list1);
+        var set2 = new HashSet<>(list1);
 
         return set1.equals(set2);
     }

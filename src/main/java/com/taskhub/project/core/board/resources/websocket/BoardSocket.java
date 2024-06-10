@@ -4,6 +4,7 @@ import com.taskhub.project.common.socket.model.SocketResponse;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 @AllArgsConstructor
 @MessageMapping("/board")
+@Slf4j
 public class BoardSocket {
 
     public static enum ACTION {

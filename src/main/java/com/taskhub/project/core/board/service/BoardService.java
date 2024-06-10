@@ -2,17 +2,14 @@ package com.taskhub.project.core.board.service;
 
 import com.taskhub.project.aspect.exception.model.ErrorsData;
 import com.taskhub.project.common.Constants;
-import com.taskhub.project.core.board.domain.Board;
-import com.taskhub.project.core.board.domain.BoardCard;
-import com.taskhub.project.core.board.domain.BoardColumn;
+import com.taskhub.project.core.board.domain.*;
 import com.taskhub.project.core.board.dto.BoardCardDto;
 import com.taskhub.project.core.board.dto.BoardDto;
 import com.taskhub.project.common.CommonFunction;
 import com.taskhub.project.core.board.helper.CustomMapper;
-import com.taskhub.project.core.board.repo.BoardCardRepo;
-import com.taskhub.project.core.board.repo.BoardColumnRepo;
-import com.taskhub.project.core.board.repo.BoardRepo;
+import com.taskhub.project.core.board.repo.*;
 import com.taskhub.project.core.board.resources.api.model.*;
+import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardSelectedLabel;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
@@ -24,10 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -37,6 +31,8 @@ public class BoardService {
     private final BoardRepo boardRepo;
     private final BoardColumnRepo boardColumnRepo;
     private final BoardCardRepo boardCardRepo;
+    private final BoardCardMemberRepo boardCardMemberRepo;
+    private final CardLabelRepo cardLabelRepo;
     private final WorkSpaceRepo workSpaceRepo;
     private final FileInfoRepo fileInfoRepo;
 
@@ -66,12 +62,35 @@ public class BoardService {
         ));
     }
 
-    public BoardDto getBoard(String boardId) {
+    public BoardDto getBoard(String boardId, String userId) {
         var board = boardRepo.findById(boardId).orElseThrow();
         var boardColumns = boardColumnRepo.findByBoardId(boardId);
         var boardCards = boardCardRepo.findByListColumnId(
-                boardColumns.stream().map(BoardColumn::getId).toList()
+                boardColumns.stream().map(BoardColumn::getId).toList(),
+                userId
         );
+
+        var mapCardLabels = new HashMap<String, List<CardLabel>>();
+        if (!boardCards.isEmpty()) {
+            boardCards.forEach(card -> {
+                var rawLabels = card.getSelectedLabelsId();
+                if (StringUtils.isBlank(rawLabels)) {
+                    return;
+                }
+                List<CardLabel> boardCardLabel;
+                boardCardLabel = cardLabelRepo.findByListId(
+                        Arrays.stream(card.getSelectedLabelsId().split(",")).toList()
+                );
+                if (boardCardLabel != null) {
+                    mapCardLabels.put(card.getId(), boardCardLabel);
+                }
+            });
+        }
+
+        var mapCardMembers = new HashMap<String, List<BoardCardMember.BoardCardMemberDetail>>();
+        boardCards.forEach(card -> {
+            mapCardMembers.put(card.getId(), boardCardMemberRepo.findByCardId(card.getId()));
+        });
 
         var mapBoardCardsByColumnId = boardCards.stream()
                 .collect(Collectors.groupingBy(BoardCard.BoardCardInfo::getColumnId));
@@ -79,7 +98,9 @@ public class BoardService {
         return CustomMapper.deepMapBoard(
                 board,
                 boardColumns,
-                mapBoardCardsByColumnId
+                mapBoardCardsByColumnId,
+                mapCardLabels,
+                mapCardMembers
         );
     }
 
@@ -179,6 +200,11 @@ public class BoardService {
 
         if (isMoveToSameColumn) {
             var column = boardColumnRepo.findById(req.getFromColumnId()).orElseThrow(() -> new RuntimeException("Column not found"));
+
+            if (!CommonFunction.isTheSameList(Arrays.stream(column.getCardOrderIds().split(",")).toList(), req.getCardOrderIds())) {
+                return ServiceResult.badRequest();
+            }
+
             column.setCardOrderIds(String.join(",", req.getCardOrderIds()));
             return ServiceResult.ok(req);
         }
@@ -198,7 +224,7 @@ public class BoardService {
         var toColumn = boardColumnRepo.findById(req.getToColumnId()).orElseThrow(() -> new RuntimeException("Column not found"));
         var card = boardCardRepo.findById(req.getCardId()).orElseThrow(() -> new RuntimeException("Card not found"));
 
-        var toColumCardOrderList = StringUtils.isBlank(toColumn.getCardOrderIds())
+        List<String> toColumCardOrderList = StringUtils.isBlank(toColumn.getCardOrderIds())
                 ? List.of()
                 : Arrays.asList(toColumn.getCardOrderIds().split(","));
         var requestCardOrderList = req.getCardOrderIds().stream().filter(cardId -> !req.getCardId().equals(cardId)).toList();

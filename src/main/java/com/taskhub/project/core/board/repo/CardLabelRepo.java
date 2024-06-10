@@ -12,6 +12,7 @@ public interface CardLabelRepo extends JpaRepository<CardLabel, String> {
     @Query(value = """
         select * from card_label cl
         where cl.id in (:listId)
+        order by cl.create_date
     """, nativeQuery = true)
     List<CardLabel> findByListId(List<String> listId);
 }

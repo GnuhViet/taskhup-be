@@ -1,11 +1,10 @@
 package com.taskhub.project.core.board.helper;
 
 import com.taskhub.project.common.Constants;
-import com.taskhub.project.core.board.domain.Board;
-import com.taskhub.project.core.board.domain.BoardCard;
-import com.taskhub.project.core.board.domain.BoardColumn;
-import com.taskhub.project.core.board.domain.CardCustomField;
+import com.taskhub.project.core.board.domain.*;
 import com.taskhub.project.core.board.dto.*;
+import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardMemberSimple;
+import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardSelectedLabel;
 import org.modelmapper.ModelMapper;
 
 import java.util.Arrays;
@@ -24,13 +23,35 @@ public class CustomMapper {
     public static BoardDto deepMapBoard(
             Board board,
             List<BoardColumn> columns,
-            Map<String, List<BoardCard.BoardCardInfo>> cards
+            Map<String, List<BoardCard.BoardCardInfo>> cards,
+            Map<String, List<CardLabel>> cardLabels,
+            Map<String, List<BoardCardMember.BoardCardMemberDetail>> cardMembers
     ) {
         var boardDto = mapper.map(board, BoardDto.class);
 
         Function<BoardCard.BoardCardInfo, BoardCardDto> toCardDto = card -> {
             var cardDto = mapper.map(card, BoardCardDto.class);
+
             cardDto.setBoardId(board.getId());
+
+            var labels = cardLabels.get(card.getId());
+            if (labels != null) {
+                cardDto.setSelectedLabels(
+                        labels.stream()
+                        .map(l -> mapper.map(l, BoardCardSelectedLabel.class))
+                        .toList()
+                );
+            }
+
+            var members = cardMembers.get(card.getId());
+            if (members != null) {
+                cardDto.setMembers(
+                        members.stream()
+                        .map(m -> mapper.map(m, BoardCardMemberSimple.class))
+                        .toList()
+                );
+            }
+
             return cardDto;
         };
 
