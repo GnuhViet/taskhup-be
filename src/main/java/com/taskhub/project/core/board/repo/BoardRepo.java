@@ -43,7 +43,7 @@ public interface BoardRepo extends JpaRepository<Board, String> {
             select
                 b.id as id,
                 b.title as title,
-                b.description as description
+                b.short_description as shortDescription
             from board b
             where b.workspace_id = :workspaceId
        """, nativeQuery = true)
@@ -60,4 +60,13 @@ public interface BoardRepo extends JpaRepository<Board, String> {
                 and bg.user_id = :userId
        """, nativeQuery = true)
     List<Board.SimpleBoard> getGuestBoards(@Param("workspaceId") String workspaceId, @Param("userId") String userId);
+
+
+    @Query(value = """
+        select CASE WHEN COUNT(b.id) > 0 THEN 'true' ELSE 'false' END
+        from board b
+            join board_card_member bcm on b.id = :boardId
+            and bcm.user_id = :userId
+    """, nativeQuery = true)
+    boolean isBoardMember(String boardId, String userId);
 }

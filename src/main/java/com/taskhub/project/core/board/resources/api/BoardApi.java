@@ -1,7 +1,10 @@
 package com.taskhub.project.core.board.resources.api;
 
+import com.taskhub.project.common.Constants;
 import com.taskhub.project.core.board.dto.BoardDto;
+import com.taskhub.project.core.board.resources.api.model.BoardBgUpdateReq;
 import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
+import com.taskhub.project.core.board.resources.api.model.BoardInfoUpdateReq;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.service.BoardStarService;
@@ -10,6 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -47,5 +51,38 @@ public class BoardApi {
     @PostMapping("/{boardId}/star")
     public ResponseEntity<?> starBoard(@PathVariable String boardId, Principal principal) {
         throw new UnsupportedOperationException();
+    }
+
+    @GetMapping("/info/{boardId}")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @PostMapping
+    public ResponseEntity<?> getBoardInfo(
+            @PathVariable String boardId,
+            Principal principal
+    ) {
+        var resp = boardService.getBoardInfo(boardId);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/update-board-info")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getBoardInfo(
+            @RequestBody BoardInfoUpdateReq request,
+            Principal principal
+    ) {
+        var resp = boardService.updateBoardInfo(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/update-board-background")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getBoardInfo(
+            @RequestBody BoardBgUpdateReq request,
+            Principal principal
+    ) {
+        var resp = boardService.updateBoardBackground(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 }

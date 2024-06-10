@@ -14,5 +14,6 @@ public class BoardDto {
     private String ownerIds;
     private String memberIds;
     private String columnOrderIds;
+    private String color;
     private List<BoardColumnDto> columns;
 }

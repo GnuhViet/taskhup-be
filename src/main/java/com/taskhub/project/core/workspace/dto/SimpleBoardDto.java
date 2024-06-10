@@ -6,5 +6,5 @@ import lombok.Data;
 public class SimpleBoardDto {
     private String id;
     private String title;
-    private String description;
+    private String shortDescription;
 }

@@ -1,6 +1,7 @@
 package com.taskhub.project.core.board.service;
 
 import com.taskhub.project.aspect.exception.model.ErrorsData;
+import com.taskhub.project.common.Constants;
 import com.taskhub.project.core.board.domain.Board;
 import com.taskhub.project.core.board.domain.BoardCard;
 import com.taskhub.project.core.board.domain.BoardColumn;
@@ -11,9 +12,7 @@ import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.BoardCardRepo;
 import com.taskhub.project.core.board.repo.BoardColumnRepo;
 import com.taskhub.project.core.board.repo.BoardRepo;
-import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
-import com.taskhub.project.core.board.resources.api.model.BoardCreateResp;
-import com.taskhub.project.core.board.resources.api.model.GetAllBoardResp;
+import com.taskhub.project.core.board.resources.api.model.*;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
@@ -45,6 +44,8 @@ public class BoardService {
 
     private final ModelMapper mapper;
 
+    private static final String BOARD_DEFAULT_COLOR = "#1976d2";
+
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
         validator.tryValidate(req)
                 .withConstraint(
@@ -55,7 +56,7 @@ public class BoardService {
 
         var board = Board.builder()
                 .title(req.getTitle())
-                .description("null") //TODO
+                .color(BOARD_DEFAULT_COLOR)
                 .workspace(workSpaceRepo.getReferenceById(req.getWorkspaceId()))
                 .build();
 
@@ -227,5 +228,69 @@ public class BoardService {
 
         req.setCard(mapper.map(card, BoardCardDto.class));
         return ServiceResult.ok(req);
+    }
+
+    public ServiceResult<?> getBoardInfo(String boardId) {
+        var boardDb = new Board[1];
+        validator.validate()
+                .withConstraint(() -> {
+                    boardDb[0] = boardRepo.findById(boardId).orElse(null);
+                    return boardDb[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        return ServiceResult.ok(mapper.map(board, BoardInfoResp.class));
+    }
+
+    public ServiceResult<?> updateBoardInfo(BoardInfoUpdateReq req, String userId) {
+        var boardDb = new Board[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardDb[0] = boardRepo.findById(req.getId()).orElse(null);
+                    return boardDb[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .withConstraint(
+                        () -> !boardRepo.isBoardMember(req.getId(), userId),
+                        ErrorsData.of("userid", "Role.Invalid", "You are not the member of the board")
+                )
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        board.setTitle(req.getTitle());
+        board.setShortDescription(req.getShortDescription());
+        board.setDescription(req.getDescription());
+
+        boardRepo.save(board);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateBoardBackground(BoardBgUpdateReq req, String userId) {
+        var boardDb = new Board[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardDb[0] = boardRepo.findById(req.getId()).orElse(null);
+                    return boardDb[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .withConstraint(
+                        () -> !boardRepo.isBoardMember(req.getId(), userId),
+                        ErrorsData.of("userid", "Role.Invalid", "You are not the member of the board")
+                )
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        if (StringUtils.isBlank(req.getColor())) {
+            board.setColor(BOARD_DEFAULT_COLOR);
+        } else {
+            board.setColor(req.getColor());
+        }
+
+        boardRepo.save(board);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 }

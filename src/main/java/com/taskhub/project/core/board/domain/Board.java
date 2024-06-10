@@ -17,9 +17,16 @@ public class Board {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    private String name;
+
     private String title;
+
+    private String shortDescription;
+
+    private String color;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
+
     private String type;
 
     private String createBy;
@@ -50,7 +57,7 @@ public class Board {
     public interface SimpleBoard {
         String getId();
         String getTitle();
-        String getDescription();
+        String getShortDescription();
         String getType();
     }
 }
