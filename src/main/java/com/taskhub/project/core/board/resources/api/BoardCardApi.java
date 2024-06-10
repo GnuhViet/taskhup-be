@@ -32,6 +32,15 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
+    @PostMapping("/card-history")
+    @Operation(summary = "Get card details", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ServiceResult<?>> getCardHistory(
+            @RequestBody CardDetailRequest request
+    ) {
+        var response = service.getCardHistory(request.getBoardCardId());
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-title")
     @Operation(summary = "Update card title", security = @SecurityRequirement(name = "bearerAuth"))

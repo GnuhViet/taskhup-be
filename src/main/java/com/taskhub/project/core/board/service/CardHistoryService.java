@@ -1,6 +1,7 @@
 package com.taskhub.project.core.board.service;
 
 import com.taskhub.project.core.board.domain.BoardCardHistory;
+import com.taskhub.project.core.board.repo.BoardCardCommentsRepo;
 import com.taskhub.project.core.board.repo.BoardCardHistoryRepo;
 import com.taskhub.project.core.board.repo.CardCustomFieldRepo;
 import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardHistoryDetails;
@@ -20,6 +21,7 @@ import java.util.concurrent.CompletableFuture;
 public class CardHistoryService {
     private final BoardCardHistoryRepo repo;
     private final CardCustomFieldRepo cardCustomFieldRepo;
+    private final BoardCardCommentsRepo boardCardCommentsRepo;
 
     public static enum CardHistoryType {
         UPDATE_TITLE,
@@ -82,6 +84,26 @@ public class CardHistoryService {
             return;
         }
 
+        if (type == CardHistoryType.UPLOAD_ATTACHMENT_COMMENT || type == CardHistoryType.DELETE_ATTACHMENT_COMMENT) {
+            var comment = boardCardCommentsRepo.findById(toData).orElse(null);
+            if (comment == null) {
+                return;
+            }
+
+            var cardHistory = BoardCardHistory.builder()
+                    .boardCardId(comment.getBoardCardId())
+                    .type(type.name())
+                    .fromData(fromData)
+                    .toData(toData)
+                    .createdAt(LocalDateTime.now())
+                    .createdBy(userId)
+                    .build();
+
+            repo.save(cardHistory);
+
+            return;
+        }
+
         var cardHistory = BoardCardHistory.builder()
                 .boardCardId(cardId)
                 .type(type.name())
@@ -98,7 +120,7 @@ public class CardHistoryService {
         List<BoardCardHistory.Details> details = null;
 
         if (isLimit) {
-            details = repo.findDetailsByCardId(cardId, PageRequest.of(0, 20));
+            details = repo.findDetailsByCardId(cardId, PageRequest.of(0, 10));
         } else {
             details = repo.findDetailsByCardId(cardId);
         }

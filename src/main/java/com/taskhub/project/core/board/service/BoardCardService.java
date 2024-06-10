@@ -54,9 +54,6 @@ public class BoardCardService {
     private final CloudinaryFileService fileService;
     private final ValidatorService validator;
 
-
-
-
     public static class AttachmentType {
         public static final String CARD_ATTACH = "CARD_ATTACH";
         public static final String COMMENT_ATTACH = "COMMENT_ATTACH";
@@ -215,6 +212,11 @@ public class BoardCardService {
                         .activityHistory(top20ActivityHistory)
                         .build()
         );
+    }
+
+    public ServiceResult<?> getCardHistory(String boardCardId) {
+        var allHistory = cardHistoryService.getCardHistoryDetails(boardCardId, false);
+        return ServiceResult.ok(allHistory);
     }
 
     public ServiceResult<?> updateCardTitle(UpdateCardTitleRequest req, String userId) {
@@ -820,7 +822,11 @@ public class BoardCardService {
 
         try {
             fd = LocalDate.parse(req.getFromDate(), dateFormater).atStartOfDay();
-            dd = LocalDateTime.parse(req.getDeadlineDate(), dateTimeFormater);
+            if (req.getDeadlineDate().contains(":")) {
+                dd = LocalDateTime.parse(req.getDeadlineDate(), dateTimeFormater);
+            } else {
+                dd = LocalDate.parse(req.getDeadlineDate(), dateFormater).atStartOfDay();
+            }
         } catch (Exception e) {
             return ServiceResult.error("INTERNAL_SERVER_ERROR");
         }
