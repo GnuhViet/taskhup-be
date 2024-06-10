@@ -36,9 +36,10 @@ public class BoardCardApi {
     @PostMapping("/update-title")
     @Operation(summary = "Update card title", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateTitle(
-            @RequestBody UpdateCardTitleRequest request
+            @RequestBody UpdateCardTitleRequest request,
+            Principal principal
     ) {
-        var response = service.updateCardTitle(request);
+        var response = service.updateCardTitle(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -46,9 +47,10 @@ public class BoardCardApi {
     @PostMapping("/select-template")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectTemplate(
-            @RequestBody SelectTemplateRequest request
+            @RequestBody SelectTemplateRequest request,
+            Principal principal
     ) {
-        var response = service.selectTemplate(request);
+        var response = service.selectTemplate(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -56,9 +58,10 @@ public class BoardCardApi {
     @PostMapping("/select-label")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectLabel(
-            @RequestBody SelectCardLabelRequest request
+            @RequestBody SelectCardLabelRequest request,
+            Principal principal
     ) {
-        var response = service.selectLabel(request);
+        var response = service.selectLabel(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -66,19 +69,21 @@ public class BoardCardApi {
     @PostMapping("/select-field")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectField(
-            @RequestBody SelectCardFieldRequest request
+            @RequestBody SelectCardFieldRequest request,
+            Principal principal
     ) {
-        var response = service.selectField(request);
+        var response = service.selectField(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-field-value")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
-    public ResponseEntity<ServiceResult<?>> selectField(
-            @RequestBody UpdateFieldValueRequest request
+    public ResponseEntity<ServiceResult<?>> updateFieldValue(
+            @RequestBody UpdateFieldValueRequest request,
+            Principal principal
     ) {
-        var response = service.updateField(request);
+        var response = service.updateField(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -86,9 +91,10 @@ public class BoardCardApi {
     @PostMapping("/update-members")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateMembers(
-            @RequestBody UpdateMemberRequest request
+            @RequestBody UpdateMemberRequest request,
+            Principal principal
     ) {
-        var response = service.updateMember(request);
+        var response = service.updateMember(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -107,9 +113,10 @@ public class BoardCardApi {
     @PostMapping("/update-checklist")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateChecklist(
-            @RequestBody UpdateCheckListReq request
+            @RequestBody UpdateCheckListReq request,
+            Principal principal
     ) {
-        var response = service.updateCheckList(request);
+        var response = service.updateCheckList(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -117,22 +124,34 @@ public class BoardCardApi {
     @PostMapping("/update-checklist-value")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateCheckListValue(
-            @RequestBody UpdateCheckListValueReq request
+            @RequestBody UpdateCheckListValueReq request,
+            Principal principal
     ) {
-        var response = service.updateCheckListValue(request);
+        var response = service.updateCheckListValue(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
     @PostMapping("/update-cover")
     public ResponseEntity<?> updateCover(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("boardCardId") String boardCardId
+            @RequestParam("boardCardId") String boardCardId,
+            Principal principal
     ) {
         var response = service.updateCardCover(UpdateCardCoverReq.builder()
                 .boardCardId(boardCardId)
                 .file(file)
-                .build()
+                .build(),
+                principal.getName()
         );
+        return new ResponseEntity<>(response, response.getHttpStatus());
+    }
+
+    @PostMapping("/remove-cover")
+    public ResponseEntity<?> updateCover(
+            @RequestBody RemoveCoverRequest request,
+            Principal principal
+    ) {
+        var response = service.removeCardCover(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -140,9 +159,10 @@ public class BoardCardApi {
     @PostMapping("/update-card-date")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateCardDate(
-            @RequestBody UpdateCardDateRequest request
+            @RequestBody UpdateCardDateRequest request,
+            Principal principal
     ) {
-        var response = service.updateCardDate(request);
+        var response = service.updateCardDate(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -150,9 +170,10 @@ public class BoardCardApi {
     @PostMapping("/update-working-status")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateWorkingStatus(
-            @RequestBody UpdateWorkingStatusReq request
+            @RequestBody UpdateWorkingStatusReq request,
+            Principal principal
     ) {
-        var response = service.updateWorkingStatus(request);
+        var response = service.updateWorkingStatus(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
@@ -160,9 +181,10 @@ public class BoardCardApi {
     @PostMapping("/update-description")
     @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateDescription(
-            @RequestBody UpdateDescriptionReq request
+            @RequestBody UpdateDescriptionReq request,
+            Principal principal
     ) {
-        var response = service.updateDescription(request);
+        var response = service.updateDescription(request, principal.getName());
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 

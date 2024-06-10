@@ -86,7 +86,7 @@ public class BoardCardService {
         var cardCustomFields = cardCustomFieldRepo.findByTemplateIdOrderByCreateDate(card.getTemplateId());
         var allAttachments = boardCardAttachmentsRepo.findByCardId(boardCardId);
         var allComments = boardCardCommentsRepo.findByCardId(boardCardId);
-        var allActivityHistory = boardCardHistoryRepo.findByCardId(boardCardId);
+        var top20ActivityHistory = cardHistoryService.getCardHistoryDetails(boardCardId, true);
 
         Map<String, List<BoardCardAttachments.BoardCardAttachmentsInfo>> attachmentMap = allAttachments.stream()
                 .filter(Objects::nonNull)
@@ -212,11 +212,12 @@ public class BoardCardService {
                         .selectedFieldsValue(cardCustomFieldValue)
                         .attachments(cardAttachments)
                         .comments(boardCardComments)
+                        .activityHistory(top20ActivityHistory)
                         .build()
         );
     }
 
-    public ServiceResult<?> updateCardTitle(UpdateCardTitleRequest req) {
+    public ServiceResult<?> updateCardTitle(UpdateCardTitleRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -235,10 +236,18 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_TITLE,
+                card.getTitle(),
+                req.getTitle(),
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> selectTemplate(SelectTemplateRequest req) {
+    public ServiceResult<?> selectTemplate(SelectTemplateRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
         var templateDb = new BoardCardTemplate[1];
 
@@ -262,23 +271,25 @@ public class BoardCardService {
         var boardCard = boardCardDb[0];
         var template = templateDb[0];
 
-        boardCard.setTemplateId(template.getId());
-        boardCard.setCardLabelValues(null);
-        boardCard.setCustomFieldValue(null);
-
-        cardHistoryService.createHistory(
+        cardHistoryService.createHistoryAsync(
                 boardCard.getId(),
                 CardHistoryType.SELECT_TEMPLATE,
                 boardCard.getTemplateId(),
-                req.getTemplateId(),
-                null //TODO
+                template.getTitle(),
+                userId
         );
+
+        boardCard.setTemplateId(template.getId());
+        boardCard.setCardLabelValues("[]");
+        boardCard.setCustomFieldValue("[]");
+
+        boardCardRepo.save(boardCard);
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
 
-    public ServiceResult<?> selectLabel(SelectCardLabelRequest req) {
+    public ServiceResult<?> selectLabel(SelectCardLabelRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -300,18 +311,29 @@ public class BoardCardService {
 
         var card = boardCardDb[0];
 
+        String oldLabel = card.getCardLabelValues();
+
         card.setCardLabelValues(
                 String.join(
                        ",",
                         req.getBoardCardLabelValue()
                 )
         );
+
         boardCardRepo.save(card);
+
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.SELECT_LABEL,
+                oldLabel,
+                card.getCardLabelValues(),
+                userId
+        );
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> selectField(SelectCardFieldRequest req) {
+    public ServiceResult<?> selectField(SelectCardFieldRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -331,7 +353,7 @@ public class BoardCardService {
                                                 .collect(Collectors.toList())
                                         : null
                         ),
-                        ErrorsData.of("BoardCardLabelValue", "05", "Label not belong to template")
+                        ErrorsData.of("BoardCardFieldValue", "05", "Field not belong to template")
                 )
                 .throwIfFails();
 
@@ -371,14 +393,24 @@ public class BoardCardService {
             return ServiceResult.error("INTERNAL_SERVER_ERROR");
         }
 
+        String oldLabel = card.getCustomFieldValue();
+
         card.setCustomFieldValue(customFieldValue);
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.SELECT_FIELD,
+                oldLabel,
+                customFieldValue,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateField(UpdateFieldValueRequest req) {
+    public ServiceResult<?> updateField(UpdateFieldValueRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -396,7 +428,7 @@ public class BoardCardService {
                                         List.of(req.getCustomFieldValue().getFieldId())
                                         : null
                         ),
-                        ErrorsData.of("BoardCardLabelValue", "05", "Label not belong to template")
+                        ErrorsData.of("BoardCardFieldValue", "05", "Field not belong to template")
                 )
                 .throwIfFails();
 
@@ -440,10 +472,18 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_FIELD,
+                null,
+                req.getCustomFieldValue().getFieldId(),
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateMember(UpdateMemberRequest req) {
+    public ServiceResult<?> updateMember(UpdateMemberRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -491,10 +531,22 @@ public class BoardCardService {
         boardCardMemberRepo.saveAll(newMembersList);
         boardCardMemberRepo.deleteAll(removeMembersList);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_MEMBER,
+                removeMembersList.stream()
+                        .map(m -> m.getId().getUserId())
+                        .collect(Collectors.joining(",")),
+                newMembersList.stream()
+                        .map(m -> m.getId().getUserId())
+                        .collect(Collectors.joining(",")),
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateCheckList(UpdateCheckListReq req) {
+    public ServiceResult<?> updateCheckList(UpdateCheckListReq req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -542,14 +594,24 @@ public class BoardCardService {
             return ServiceResult.error("INTERNAL_SERVER_ERROR");
         }
 
+        String oldCheckListString = card.getCheckListValue();
+
         card.setCheckListValue(checkListString);
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_CHECKLIST,
+                oldCheckListString,
+                checkListString,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateCheckListValue(UpdateCheckListValueReq req) {
+    public ServiceResult<?> updateCheckListValue(UpdateCheckListValueReq req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -595,9 +657,19 @@ public class BoardCardService {
             return ServiceResult.error("INTERNAL_SERVER_ERROR");
         }
 
+        String oldCheckListString = card.getCheckListValue();
+
         card.setCheckListValue(checkListString);
 
         boardCardRepo.save(card);
+
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_CHECKLIST_VALUE,
+                oldCheckListString,
+                checkListString,
+                userId
+        );
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
@@ -640,7 +712,7 @@ public class BoardCardService {
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateCardCover(UpdateCardCoverReq req) {
+    public ServiceResult<?> updateCardCover(UpdateCardCoverReq req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -678,11 +750,57 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_COVER,
+                null,
+                null,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
+    public ServiceResult<?> removeCardCover(RemoveCoverRequest req, String userId) {
+        var boardCardDb = new BoardCard[1];
 
-    public ServiceResult<?> updateCardDate(UpdateCardDateRequest req) {
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardCardDb[0] = boardCardRepo.findById(req.getBoardCardId()).orElse(null);
+                            return boardCardDb[0] == null;
+                        },
+                        ErrorsData.of("boardCardId", "04", "Board card not found")
+                )
+                .throwIfFails();
+
+        var card = boardCardDb[0];
+
+        var oldCover = card.getCover();
+
+        if (!StringUtils.isBlank(oldCover)) {
+            var resp = fileService.deleteFile(oldCover);
+            if (!fileService.isDeleteSuccess(resp)) {
+                return ServiceResult.error("Internal server error: Failed to delete old avatar");
+            }
+        }
+
+        card.setCover(null);
+
+        boardCardRepo.save(card);
+
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.REMOVE_COVER,
+                null,
+                null,
+                userId
+        );
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateCardDate(UpdateCardDateRequest req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -707,16 +825,27 @@ public class BoardCardService {
             return ServiceResult.error("INTERNAL_SERVER_ERROR");
         }
 
+        String oldFromDate = card.getFromDate() != null ? dateFormater.format(card.getFromDate()) : null;
+        String oldDeadlineDate = card.getDeadlineDate() != null ? dateTimeFormater.format(card.getDeadlineDate()) : null;
+
         card.setFromDate(fd);
         card.setDeadlineDate(dd);
         card.setReminder(req.getReminder());
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_DATE,
+                oldFromDate + " @ " + oldDeadlineDate,
+                req.getFromDate() + " @ " + req.getDeadlineDate(),
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateWorkingStatus(UpdateWorkingStatusReq req) {
+    public ServiceResult<?> updateWorkingStatus(UpdateWorkingStatusReq req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -737,10 +866,18 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_WORKING_STATUS,
+                req.getWorkingStatus() ? null : "1",
+                req.getWorkingStatus() ? "1" : null,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
-    public ServiceResult<?> updateDescription(UpdateDescriptionReq req) {
+    public ServiceResult<?> updateDescription(UpdateDescriptionReq req, String userId) {
         var boardCardDb = new BoardCard[1];
 
         validator.tryValidate(req)
@@ -759,6 +896,14 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
+        cardHistoryService.createHistoryAsync(
+                card.getId(),
+                CardHistoryType.UPDATE_DESCRIPTION,
+                null,
+                null,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
@@ -769,6 +914,7 @@ public class BoardCardService {
             String userId
     ) {
         var boardCardDb = new BoardCard[1];
+        var commentDb = new BoardCardComments[1];
 
         validator.tryValidate(req)
                 .withConstraint(
@@ -781,7 +927,8 @@ public class BoardCardService {
                                 boardCardDb[0] = boardCardRepo.findById(req.getRefId()).orElse(null);
                                 return boardCardDb[0] == null;
                             } else {
-                                return false;
+                                commentDb[0] = boardCardCommentsRepo.findById(req.getRefId()).orElse(null);
+                                return commentDb[0] == null;
                             }
                         },
                         ErrorsData.of("boardCardId", "04", "Board card not found")
@@ -804,6 +951,17 @@ public class BoardCardService {
                 .build();
 
         boardCardAttachmentsRepo.save(attachment);
+
+        cardHistoryService.createHistoryAsync(
+                req.getRefId(),
+                req.getType().equals(AttachmentType.CARD_ATTACH)
+                        ? CardHistoryType.UPLOAD_ATTACHMENT_CARD
+                        : CardHistoryType.UPLOAD_ATTACHMENT_COMMENT
+                ,
+                null,
+                ((FileInfo) fileInfo.getData()).getOriginFileName(),
+                userId
+        );
 
         // CompletableFuture<ServiceResult<?>> future = fileService.uploadFileAsync(file);
         //
@@ -856,6 +1014,17 @@ public class BoardCardService {
 
         boardCardAttachmentsRepo.delete(attachment);
 
+        cardHistoryService.createHistoryAsync(
+                attachment.getRefId(),
+                attachment.getType().equals(AttachmentType.CARD_ATTACH)
+                        ? CardHistoryType.DELETE_ATTACHMENT_CARD
+                        : CardHistoryType.DELETE_ATTACHMENT_COMMENT
+                ,
+                null,
+                null,
+                userId
+        );
+
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 
@@ -882,6 +1051,14 @@ public class BoardCardService {
                 .build();
 
         boardCardCommentsRepo.save(comment);
+
+        cardHistoryService.createHistoryAsync(
+                req.getBoardCardId(),
+                CardHistoryType.CREATE_COMMENT,
+                null,
+                null,
+                userId
+        );
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
@@ -938,6 +1115,14 @@ public class BoardCardService {
                 return ServiceResult.error("Internal server error: Failed to delete old avatar");
             }
         }
+
+        cardHistoryService.createHistoryAsync(
+                comment.getBoardCardId(),
+                CardHistoryType.DELETE_COMMENT,
+                null,
+                null,
+                userId
+        );
 
         boardCardAttachmentsRepo.deleteAll(attachments);
         boardCardCommentsRepo.delete(comment);

@@ -28,4 +28,16 @@ public class BoardCardHistory {
     private LocalDateTime createdAt;
 
     private String createdBy;
+
+    public interface Details {
+        String getId();
+        String getType();
+        String getToData();
+        LocalDateTime getActionDate();
+
+        String getUserId();
+        String getUserName();
+        String getUserFullName();
+        String getUserAvatar();
+    }
 }

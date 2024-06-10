@@ -116,6 +116,9 @@ public class BoardService {
         var card = BoardCard.builder()
                 .title(req.getTitle())
                 .boardColumn(column)
+                .CardLabelValues("[]")
+                .CustomFieldValue("[]")
+                .CheckListValue("[]")
                 .build();
 
         var savedCard = boardCardRepo.save(card);

@@ -37,17 +37,17 @@ public class BoardCard {
     private Integer workingStatus;
 
     @Column(columnDefinition = "TEXT")
-    private String CardLabelValues;
+    private String CardLabelValues = "[]";
 
     // map json
     // fieldId -> value
     // 1 -> true,false,true,true ( dropdown )
     // 2 -> 3 (dropdown-option-value-order-selecter)
     @Column(columnDefinition = "TEXT")
-    private String CustomFieldValue;
+    private String CustomFieldValue = "[]";
 
     @Column(columnDefinition = "TEXT")
-    private String CheckListValue;
+    private String CheckListValue = "[]";
 
     private String templateId;
 
