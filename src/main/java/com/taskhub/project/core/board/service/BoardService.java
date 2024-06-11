@@ -9,10 +9,12 @@ import com.taskhub.project.common.CommonFunction;
 import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.*;
 import com.taskhub.project.core.board.resources.api.model.*;
+import com.taskhub.project.core.board.resources.api.model.boardCardApiModel.DeleteCommentReq;
 import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardSelectedLabel;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
+import com.taskhub.project.core.file.impl.CloudinaryFileService;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
 import com.taskhub.project.core.workspace.domain.BoardStar;
@@ -38,11 +40,17 @@ public class BoardService {
     private final BoardStarRepo boardStarRepo;
     private final FileInfoRepo fileInfoRepo;
 
+    private final CloudinaryFileService fileService;
+
     private final ValidatorService validator;
 
     private final ModelMapper mapper;
 
     private static final String BOARD_DEFAULT_COLOR = "#1976d2";
+    private final BoardCardAttachmentsRepo boardCardAttachmentsRepo;
+    private final BoardCardCommentsRepo boardCardCommentsRepo;
+    private final BoardCardHistoryRepo boardCardHistoryRepo;
+    private final BoardCardWatchRepo boardCardWatchRepo;
 
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
         validator.tryValidate(req)
@@ -358,5 +366,133 @@ public class BoardService {
         );
 
         return ServiceResult.ok(mapper.map(board, BoardInfoResp.class));
+    }
+
+    @Transactional(rollbackOn = Exception.class)
+    public void deleteBoardCard(BoardCard boardCard, boolean isDeleteColum) throws Exception {
+        var boardColumn = boardCard.getBoardColumn();
+        var boardCardAttachments = boardCardAttachmentsRepo.findByCardId(boardCard.getId()); // check xem co ra attach cua comment khong
+        var boardCardComments = boardCardCommentsRepo.findByCardId(boardCard.getId());
+        var boardCardHistory = boardCardHistoryRepo.findByCardId(boardCard.getId());
+        var boardCardMembers = boardCardMemberRepo.findObjByCardId(boardCard.getId());
+        var boardCardWatchers = boardCardWatchRepo.findByCardId(boardCard.getId()).orElse(null);
+
+        if (boardCardWatchers != null) {
+            boardCardWatchRepo.deleteAll(boardCardWatchers);
+        }
+        if (boardCardMembers != null) {
+            boardCardMemberRepo.deleteAll(boardCardMembers);
+        }
+        if (boardCardHistory != null) {
+            boardCardHistoryRepo.deleteAll(boardCardHistory);
+        }
+        if (boardCardComments != null) {
+            boardCardComments.forEach(item -> {
+                boardCardCommentsRepo.deleteById(item.getId());
+            });
+        }
+
+        if (boardCardAttachments != null) {
+
+            var listFileId = boardCardAttachments
+                    .stream()
+                    .map(BoardCardAttachments.BoardCardAttachmentsInfo::getFileId)
+                    .toList();
+
+            var resp = fileService.deleteFile(listFileId);
+            if (!fileService.isDeleteSuccess(resp)) {
+                throw new Exception("Delete file failed");
+            }
+
+            for (var item : boardCardAttachments) {
+                boardCardAttachmentsRepo.deleteById(item.getId());
+            }
+        }
+
+        if (StringUtils.isNotBlank(boardCard.getCover())) {
+            var resp = fileService.deleteFile(boardCard.getCover());
+            if (!fileService.isDeleteSuccess(resp)) {
+                throw new Exception("Delete file failed");
+            }
+        }
+
+        if (!isDeleteColum) {
+            var cardOrderIds = boardColumn.getCardOrderIds().split(",");
+            var newCardOrderIds = Arrays.stream(cardOrderIds)
+                    .filter(cardId -> !cardId.equals(boardCard.getId()))
+                    .collect(Collectors.joining(","));
+            boardColumn.setCardOrderIds(newCardOrderIds);
+            boardColumnRepo.save(boardColumn);
+        }
+
+        boardCardRepo.delete(boardCard);
+    }
+
+    public ServiceResult<?> deleteBoardCard(BoardCardDeleteReq request, String userId) {
+        var boardCardDB = new BoardCard[1];
+        validator.tryValidate(request)
+                .withConstraint(() -> {
+                    boardCardDB[0] = boardCardRepo.findById(request.getCardId()).orElse(null);
+                    return boardCardDB[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        try {
+            deleteBoardCard(boardCardDB[0], false);
+        } catch (Exception e) {
+            return ServiceResult.error(e.getMessage());
+        }
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> updateColumTitle(UpdateColumTitleReq req, String userId) {
+        var boardColumnDB = new BoardColumn[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardColumnDB[0] = boardColumnRepo.findById(req.getColumnId()).orElse(null);
+                    return boardColumnDB[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        var boardColumn = boardColumnDB[0];
+        boardColumn.setTitle(req.getTitle());
+        boardColumnRepo.save(boardColumn);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> deleteColumn(DeleteCommentReq req, String userId) {
+        var boardColumnDB = new BoardColumn[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardColumnDB[0] = boardColumnRepo.findById(req.getId()).orElse(null);
+                    return boardColumnDB[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        var boardColumn = boardColumnDB[0];
+
+        var board = boardColumn.getBoard();
+        var boardCards = boardColumn.getBoardCards();
+
+        for (var boardCard : boardCards) {
+            try {
+                deleteBoardCard(boardCard, true);
+            } catch (Exception e) {
+                return ServiceResult.error(e.getMessage());
+            }
+        }
+
+        var columnOrderIds = board.getColumnOrderIds().split(",");
+        var newColumnOrderIds = Arrays.stream(columnOrderIds)
+                .filter(columnId -> !columnId.equals(boardColumn.getId()))
+                .collect(Collectors.joining(","));
+        board.setColumnOrderIds(newColumnOrderIds);
+
+        boardColumnRepo.delete(boardColumn);
+        boardRepo.save(board);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
 }

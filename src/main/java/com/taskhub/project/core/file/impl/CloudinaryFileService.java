@@ -12,8 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,6 +70,36 @@ public class CloudinaryFileService implements FileService {
             }
 
             fileInfoRepo.deleteById(id);
+            return ServiceResult.ok("success");
+        } catch (Exception e) {
+            return ServiceResult.error("Failed to delete file: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public ServiceResult<?> deleteFile(List<String> id) {
+        try {
+            var fileInfo = fileInfoRepo.findByListId(id);
+            if (fileInfo == null) {
+                return ServiceResult.error("File not found");
+            }
+
+            Map<String, List<FileInfo>> mapByResourceType = fileInfo.stream()
+                    .collect(Collectors.groupingBy(FileInfo::getResourceType));
+
+            for (Map.Entry<String, List<FileInfo>> entry : mapByResourceType.entrySet()) {
+                List<String> listId = entry.getValue().stream().map(FileInfo::getId).collect(Collectors.toList());
+
+                Map data = cloudinary.api().deleteResources(listId, ObjectUtils.asMap(
+                        "resource_type", entry.getKey()
+                ));
+
+                if (((Map) data.get("deleted")).size() != listId.size()) { // result
+                    return ServiceResult.error("failed");
+                }
+            }
+
+            fileInfoRepo.deleteAll(fileInfo);
             return ServiceResult.ok("success");
         } catch (Exception e) {
             return ServiceResult.error("Failed to delete file: " + e.getMessage());

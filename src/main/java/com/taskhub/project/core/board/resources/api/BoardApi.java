@@ -2,10 +2,8 @@ package com.taskhub.project.core.board.resources.api;
 
 import com.taskhub.project.common.Constants;
 import com.taskhub.project.core.board.dto.BoardDto;
-import com.taskhub.project.core.board.resources.api.model.BoardBgUpdateReq;
-import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
-import com.taskhub.project.core.board.resources.api.model.BoardInfoUpdateReq;
-import com.taskhub.project.core.board.resources.api.model.BoardStarReq;
+import com.taskhub.project.core.board.resources.api.model.*;
+import com.taskhub.project.core.board.resources.api.model.boardCardApiModel.DeleteCommentReq;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.service.BoardStarService;
@@ -90,6 +88,42 @@ public class BoardApi {
             Principal principal
     ) {
         var resp = boardService.updateBoardBackground(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    // delete card
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/delete-board-card")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getBoardInfo(
+            @RequestBody BoardCardDeleteReq request,
+            Principal principal
+    ) {
+        var resp = boardService.deleteBoardCard(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    // update colum title
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/update-colum-title")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getBoardInfo(
+            @RequestBody UpdateColumTitleReq request,
+            Principal principal
+    ) {
+        var resp = boardService.updateColumTitle(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    // detele collumn
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/delete-colum")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getBoardInfo(
+            @RequestBody DeleteCommentReq request,
+            Principal principal
+    ) {
+        var resp = boardService.deleteColumn(request, principal.getName());
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 }
