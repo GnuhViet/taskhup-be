@@ -15,6 +15,7 @@ import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
+import com.taskhub.project.core.workspace.domain.BoardStar;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,7 @@ public class BoardService {
     private final BoardCardMemberRepo boardCardMemberRepo;
     private final CardLabelRepo cardLabelRepo;
     private final WorkSpaceRepo workSpaceRepo;
+    private final BoardStarRepo boardStarRepo;
     private final FileInfoRepo fileInfoRepo;
 
     private final ValidatorService validator;
@@ -318,5 +320,43 @@ public class BoardService {
         boardRepo.save(board);
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> starBoard(BoardStarReq req, String userId) {
+        var boardDb = new Board[1];
+        var boardStarDb = new BoardStar[1];
+        validator.tryValidate(req)
+                .withConstraint(
+                        () -> {
+                            boardDb[0] = boardRepo.findById(req.getBoardId()).orElse(null);
+                            return boardDb[0] == null;
+                        },
+                        ErrorsData.of("boardId", "NotFound", "Board not found")
+                )
+                .withConstraint(
+                        () -> {
+                            if (req.getIsStarred()) return false;
+                            boardStarDb[0] = boardStarRepo.findByBoardIdAndUserId(req.getBoardId(), userId);
+                            return boardStarDb[0] == null;
+                        },
+                        ErrorsData.of("boardId", "NotFound", "Board not found")
+                )
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        if (!req.getIsStarred()) {
+            var boardStar = boardStarDb[0];
+            boardStarRepo.delete(boardStar);
+            return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+        }
+
+        boardStarRepo.save(BoardStar.builder()
+                .boardId(board.getId())
+                .userId(userId)
+                .build()
+        );
+
+        return ServiceResult.ok(mapper.map(board, BoardInfoResp.class));
     }
 }

@@ -43,17 +43,34 @@ public interface BoardRepo extends JpaRepository<Board, String> {
             select
                 b.id as id,
                 b.title as title,
-                b.short_description as shortDescription
+                b.short_description as shortDescription,
+                b.color as color,
+                (
+                    select count(*)
+                    from `board-star` bs
+                    where bs.board_id = b.id
+                    and bs.user_id = :userId
+                ) as isStarred
             from board b
             where b.workspace_id = :workspaceId
        """, nativeQuery = true)
-    List<Board.SimpleBoard> getBoardsByWorkSpaceId(@Param("workspaceId") String workspaceId);
+    List<Board.SimpleBoard> getBoardsByWorkSpaceId(
+            @Param("workspaceId") String workspaceId,
+            @Param("userId") String userId
+    );
 
     @Query(value = """
             select
                 b.id as id,
                 b.title as title,
-                b.description as description
+                b.short_description as shortDescription,
+                b.color as color,
+                (
+                    select count(*)
+                    from `board-star` bs
+                    where bs.board_id = b.id
+                    and bs.user_id = :userId
+                ) as isStarred
             from board b
                 join board_guest bg on b.id = bg.board_id
             where b.workspace_id = :workspaceId

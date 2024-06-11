@@ -203,7 +203,7 @@ public class WorkSpaceService {
         List<WorkSpace.UserWorkSpace> userWorkSpaceList = workSpaceRepo.getUserWorkSpaces(userId).orElse(null);
 
         if (userWorkSpaceList == null) {
-            return ServiceResult.notFound();// TODO
+            return ServiceResult.notFound();// TODâ
         }
 
         GetWorkSpaceResp resp = new GetWorkSpaceResp();
@@ -226,7 +226,7 @@ public class WorkSpaceService {
         });
 
         resp.getJoinedWorkSpaces().forEach(item -> {
-            var boards = boardRepo.getBoardsByWorkSpaceId(item.getId());
+            var boards = boardRepo.getBoardsByWorkSpaceId(item.getId(), userId);
             item.setBoards(boards.stream().map(board -> mapper.map(board, SimpleBoardDto.class)).toList());
         });
 

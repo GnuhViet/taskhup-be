@@ -5,10 +5,10 @@ import com.taskhub.project.core.board.dto.BoardDto;
 import com.taskhub.project.core.board.resources.api.model.BoardBgUpdateReq;
 import com.taskhub.project.core.board.resources.api.model.BoardCreateReq;
 import com.taskhub.project.core.board.resources.api.model.BoardInfoUpdateReq;
+import com.taskhub.project.core.board.resources.api.model.BoardStarReq;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.board.service.BoardStarService;
-import com.taskhub.project.core.file.FileInfoRepo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
@@ -51,9 +51,13 @@ public class BoardApi {
     }
 
     @Operation(summary = "Star a board", security = @SecurityRequirement(name = "bearerAuth"))
-    @PostMapping("/{boardId}/star")
-    public ResponseEntity<?> starBoard(@PathVariable String boardId, Principal principal) {
-        throw new UnsupportedOperationException();
+    @PostMapping("/board-star")
+    public ResponseEntity<?> starBoard(
+            @RequestBody BoardStarReq request,
+            Principal principal
+    ) {
+        var resp = boardService.starBoard(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
 
     @GetMapping("/info/{boardId}")

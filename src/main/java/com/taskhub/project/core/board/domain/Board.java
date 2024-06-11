@@ -58,6 +58,7 @@ public class Board {
         String getId();
         String getTitle();
         String getShortDescription();
-        String getType();
+        String getColor();
+        Integer getIsStarred();
     }
 }
