@@ -50,7 +50,9 @@ public interface BoardRepo extends JpaRepository<Board, String> {
                     from `board-star` bs
                     where bs.board_id = b.id
                     and bs.user_id = :userId
-                ) as isStarred
+                ) as isStarred,
+                b.start_date as startDate,
+                b.end_date as endDate
             from board b
             where b.workspace_id = :workspaceId
        """, nativeQuery = true)

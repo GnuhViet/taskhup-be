@@ -14,8 +14,9 @@ public interface RoleRepo extends JpaRepository<Role, String> {
         from Role r
         join WorkSpaceMember wsm on r.id = wsm.role.id
         where wsm.user.id = :userId
+        and wsm.workspace.id = :workspaceId
     """)
-    Role findWorkspaceMemberRole(String userId);
+    Role findWorkspaceMemberRole(String userId, String workspaceId);
 
     @Query("""
         select r

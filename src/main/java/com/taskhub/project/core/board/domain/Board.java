@@ -64,5 +64,7 @@ public class Board {
         String getShortDescription();
         String getColor();
         Integer getIsStarred();
+        LocalDateTime getStartDate();
+        LocalDateTime getEndDate();
     }
 }

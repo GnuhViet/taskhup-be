@@ -272,7 +272,7 @@ public class AuthService {
         String roleToken = null;
 
         if (userType[0]) {
-            role = roleRepo.findWorkspaceMemberRole(token.getUserId());
+            role = roleRepo.findWorkspaceMemberRole(token.getUserId(), req.getWorkspaceId());
             roleToken = jwtService.generateRoleToken(token.getUserId(), JWTService.RoleWithActions.of(role, req.getWorkspaceId()));
         }
         else if (userType[1]) {
