@@ -4,6 +4,7 @@ import com.taskhub.project.core.workspace.domain.WorkSpace;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -31,6 +32,9 @@ public class Board {
 
     private String createBy;
     private String createDate;
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 
     // @ManyToMany(fetch = FetchType.LAZY)
     // @JoinTable(

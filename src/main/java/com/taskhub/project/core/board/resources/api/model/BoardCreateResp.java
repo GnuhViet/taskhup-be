@@ -6,6 +6,6 @@ import lombok.Data;
 public class BoardCreateResp {
     private String id;
     private String title;
-    private String background;
+    private String color;
     private String workspaceId;
 }

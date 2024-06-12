@@ -24,6 +24,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -45,7 +47,7 @@ public class BoardService {
     private final ValidatorService validator;
 
     private final ModelMapper mapper;
-
+    public static DateTimeFormatter dateFormater = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final String BOARD_DEFAULT_COLOR = "#1976d2";
     private final BoardCardAttachmentsRepo boardCardAttachmentsRepo;
     private final BoardCardCommentsRepo boardCardCommentsRepo;
@@ -62,7 +64,7 @@ public class BoardService {
 
         var board = Board.builder()
                 .title(req.getTitle())
-                .color(BOARD_DEFAULT_COLOR)
+                .color(req.getBackground())
                 .workspace(workSpaceRepo.getReferenceById(req.getWorkspaceId()))
                 .build();
 
@@ -298,6 +300,10 @@ public class BoardService {
         board.setTitle(req.getTitle());
         board.setShortDescription(req.getShortDescription());
         board.setDescription(req.getDescription());
+        if (StringUtils.isNotBlank(req.getStartDate()) && StringUtils.isNotBlank(req.getEndDate())) {
+            board.setStartDate(LocalDate.parse(req.getStartDate(), dateFormater).atStartOfDay());
+            board.setEndDate(LocalDate.parse(req.getEndDate(), dateFormater).atStartOfDay());
+        }
 
         boardRepo.save(board);
 

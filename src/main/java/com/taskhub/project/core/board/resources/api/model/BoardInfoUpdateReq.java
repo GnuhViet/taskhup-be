@@ -11,4 +11,6 @@ public class BoardInfoUpdateReq {
     private String title;
     private String shortDescription;
     private String description;
+    private String startDate;
+    private String endDate;
 }
