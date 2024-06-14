@@ -74,7 +74,18 @@ public class CustomMapper {
             return columnDto;
         });
 
-        boardDto.setColumns(columns.stream().map(toColumnDto).toList());
+        boardDto.setColumns(
+                columns
+                        .stream()
+                        .filter(item -> {
+                            if (item.getIsDeleted() == null) {
+                                return true;
+                            }
+                            return !item.getIsDeleted();
+                        })
+                        .map(toColumnDto)
+                        .toList()
+        );
 
         return boardDto;
     }

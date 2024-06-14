@@ -44,6 +44,10 @@ public class Board {
     // )
     // private Set<AppUser> appUsers;
 
+    private Boolean isOnlyMemberEdit;
+
+    private Boolean isNeedReview;
+
     @Column(columnDefinition = "TEXT")
     private String columnOrderIds;
 

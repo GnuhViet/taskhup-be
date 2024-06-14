@@ -15,7 +15,6 @@ import com.taskhub.project.core.board.resources.api.model.boardCardDetails.*;
 import com.taskhub.project.core.file.domain.FileInfo;
 import com.taskhub.project.core.file.impl.CloudinaryFileService;
 import com.taskhub.project.core.helper.validator.ValidatorService;
-import com.taskhub.project.core.user.entities.AppUser;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
@@ -26,11 +25,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.taskhub.project.core.board.service.CardHistoryService.CardHistoryType;
+import static com.taskhub.project.core.board.service.HistoryService.CardHistoryType;
 
 @Service
 @AllArgsConstructor
@@ -50,7 +48,7 @@ public class BoardCardService {
     private final ModelMapper mapper;
     private final ObjectMapper objectMapper;
 
-    private final CardHistoryService cardHistoryService;
+    private final HistoryService historyService;
     private final CloudinaryFileService fileService;
     private final ValidatorService validator;
 
@@ -83,7 +81,7 @@ public class BoardCardService {
         var cardCustomFields = cardCustomFieldRepo.findByTemplateIdOrderByCreateDate(card.getTemplateId());
         var allAttachments = boardCardAttachmentsRepo.findByCardId(boardCardId);
         var allComments = boardCardCommentsRepo.findByCardId(boardCardId);
-        var top20ActivityHistory = cardHistoryService.getCardHistoryDetails(boardCardId, true);
+        var top20ActivityHistory = historyService.getCardHistoryDetails(boardCardId, true);
 
         Map<String, List<BoardCardAttachments.BoardCardAttachmentsInfo>> attachmentMap = allAttachments.stream()
                 .filter(Objects::nonNull)
@@ -215,7 +213,7 @@ public class BoardCardService {
     }
 
     public ServiceResult<?> getCardHistory(String boardCardId) {
-        var allHistory = cardHistoryService.getCardHistoryDetails(boardCardId, false);
+        var allHistory = historyService.getCardHistoryDetails(boardCardId, false);
         return ServiceResult.ok(allHistory);
     }
 
@@ -238,7 +236,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_TITLE,
                 card.getTitle(),
@@ -273,7 +271,7 @@ public class BoardCardService {
         var boardCard = boardCardDb[0];
         var template = templateDb[0];
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 boardCard.getId(),
                 CardHistoryType.SELECT_TEMPLATE,
                 boardCard.getTemplateId(),
@@ -324,7 +322,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.SELECT_LABEL,
                 oldLabel,
@@ -401,7 +399,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.SELECT_FIELD,
                 oldLabel,
@@ -474,7 +472,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_FIELD,
                 null,
@@ -533,7 +531,7 @@ public class BoardCardService {
         boardCardMemberRepo.saveAll(newMembersList);
         boardCardMemberRepo.deleteAll(removeMembersList);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_MEMBER,
                 removeMembersList.stream()
@@ -602,7 +600,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_CHECKLIST,
                 oldCheckListString,
@@ -665,7 +663,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_CHECKLIST_VALUE,
                 oldCheckListString,
@@ -752,7 +750,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_COVER,
                 null,
@@ -791,7 +789,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.REMOVE_COVER,
                 null,
@@ -840,7 +838,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_DATE,
                 oldFromDate + " @ " + oldDeadlineDate,
@@ -865,18 +863,25 @@ public class BoardCardService {
                 .throwIfFails();
 
         var card = boardCardDb[0];
+        var column = card.getBoardColumn();
+        var board = column.getBoard();
+
+        var workingStatus = 1;
+        if (board.getIsNeedReview()) {
+            workingStatus = 2;
+        }
 
         card.setWorkingStatus(
-                req.getWorkingStatus() ? 1 : null
+                req.getWorkingStatus() ? workingStatus : null
         );
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_WORKING_STATUS,
-                req.getWorkingStatus() ? null : "1",
-                req.getWorkingStatus() ? "1" : null,
+                req.getWorkingStatus() ? null : String.valueOf(workingStatus),
+                req.getWorkingStatus() ? String.valueOf(workingStatus) : null,
                 userId
         );
 
@@ -902,7 +907,7 @@ public class BoardCardService {
 
         boardCardRepo.save(card);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 card.getId(),
                 CardHistoryType.UPDATE_DESCRIPTION,
                 null,
@@ -958,7 +963,7 @@ public class BoardCardService {
 
         boardCardAttachmentsRepo.save(attachment);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 req.getRefId(),
                 req.getType().equals(AttachmentType.CARD_ATTACH)
                         ? CardHistoryType.UPLOAD_ATTACHMENT_CARD
@@ -1020,7 +1025,7 @@ public class BoardCardService {
 
         boardCardAttachmentsRepo.delete(attachment);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 attachment.getRefId(),
                 attachment.getType().equals(AttachmentType.CARD_ATTACH)
                         ? CardHistoryType.DELETE_ATTACHMENT_CARD
@@ -1058,7 +1063,7 @@ public class BoardCardService {
 
         boardCardCommentsRepo.save(comment);
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 req.getBoardCardId(),
                 CardHistoryType.CREATE_COMMENT,
                 null,
@@ -1122,7 +1127,7 @@ public class BoardCardService {
             }
         }
 
-        cardHistoryService.createHistoryAsync(
+        historyService.createCardHistoryAsync(
                 comment.getBoardCardId(),
                 CardHistoryType.DELETE_COMMENT,
                 null,

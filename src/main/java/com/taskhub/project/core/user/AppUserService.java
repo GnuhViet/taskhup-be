@@ -5,7 +5,7 @@ import com.taskhub.project.common.Constants;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authentication.dtos.UpdateInfoRequest;
 import com.taskhub.project.core.auth.authorization.constans.DefaultFile;
-import com.taskhub.project.core.board.service.CardHistoryService;
+import com.taskhub.project.core.board.service.HistoryService;
 import com.taskhub.project.core.file.FileService;
 import com.taskhub.project.core.file.domain.FileInfo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
@@ -29,7 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class AppUserService {
     private final UserRepo userRepo;
     private final FileService fileService;
-    private final CardHistoryService cardHistoryService;
+    private final HistoryService historyService;
     private final ValidatorService validator;
     private final UserNotificationReadRepo userNotificationReadRepo;
 
@@ -37,13 +37,13 @@ public class AppUserService {
             UserRepo userRepo,
             @Qualifier("cloudinaryFileService") FileService fileService,
             ValidatorService validator,
-            CardHistoryService cardHistoryService,
+            HistoryService historyService,
             UserNotificationReadRepo userNotificationReadRepo
     ) {
         this.userRepo = userRepo;
         this.fileService = fileService;
         this.validator = validator;
-        this.cardHistoryService = cardHistoryService;
+        this.historyService = historyService;
         this.userNotificationReadRepo = userNotificationReadRepo;
     }
 
@@ -130,7 +130,7 @@ public class AppUserService {
         }
 
         return ServiceResult
-                .ok(cardHistoryService.getUserNotification(userId, req.getIsOnlyUnread()));
+                .ok(historyService.getUserNotification(userId, req.getIsOnlyUnread()));
     }
 
     public ServiceResult<?> markAsReadNotification(MarkAsReadNotificationReq request, String userId) {

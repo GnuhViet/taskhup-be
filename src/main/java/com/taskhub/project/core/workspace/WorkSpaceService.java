@@ -207,7 +207,7 @@ public class WorkSpaceService {
         List<WorkSpace.UserWorkSpace> userWorkSpaceList = workSpaceRepo.getUserWorkSpaces(userId).orElse(null);
 
         if (userWorkSpaceList == null) {
-            return ServiceResult.notFound();// TODâ
+            return ServiceResult.notFound();// TODO
         }
 
         GetWorkSpaceResp resp = new GetWorkSpaceResp();

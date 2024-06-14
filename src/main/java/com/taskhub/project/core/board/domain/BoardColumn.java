@@ -25,6 +25,8 @@ public class BoardColumn {
     )
     private List<BoardCard> boardCards;
 
+    private Boolean isDeleted;
+
     @ManyToOne
     @JoinColumn(name = "board_id")
     private Board board;

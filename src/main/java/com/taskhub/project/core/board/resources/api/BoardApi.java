@@ -126,4 +126,14 @@ public class BoardApi {
         var resp = boardService.deleteColumn(request, principal.getName());
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/manage-board")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getManageInfo(
+            @RequestBody ManageInfoReq request
+    ) {
+        var resp = boardService.getManageInfo(request);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
 }

@@ -1,9 +1,13 @@
 package com.taskhub.project.core.board.service;
 
 import com.taskhub.project.core.board.domain.BoardCardHistory;
+import com.taskhub.project.core.board.domain.BoardColumnHistory;
 import com.taskhub.project.core.board.repo.BoardCardCommentsRepo;
 import com.taskhub.project.core.board.repo.BoardCardHistoryRepo;
 import com.taskhub.project.core.board.repo.CardCustomFieldRepo;
+import com.taskhub.project.core.board.repo.BoardColumHistoryRepo;
+import com.taskhub.project.core.board.resources.api.model.DeleteRequest;
+import com.taskhub.project.core.board.resources.api.model.ReviewRequest;
 import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardHistoryDetails;
 import com.taskhub.project.core.user.model.NotificationResp;
 import lombok.AllArgsConstructor;
@@ -20,13 +24,14 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @AllArgsConstructor
 @Transactional
-public class CardHistoryService {
+public class HistoryService {
     private final BoardCardHistoryRepo repo;
     private final CardCustomFieldRepo cardCustomFieldRepo;
     private final BoardCardCommentsRepo boardCardCommentsRepo;
+    private final BoardColumHistoryRepo boardColumnHistoryRepo;
     private final ModelMapper mapper;
 
-    public static enum CardHistoryType {
+    public enum CardHistoryType {
         UPDATE_TITLE,
         SELECT_TEMPLATE,
         SELECT_LABEL,
@@ -49,18 +54,32 @@ public class CardHistoryService {
         DELETE_CARD
     }
 
-    public CompletableFuture<Void> createHistoryAsync(
+    public enum ColumnHistoryType {
+        DELETE_COLUMN
+    }
+
+    public CompletableFuture<Void> createCardHistoryAsync(
             String cardId,
             CardHistoryType type,
             String fromData,
             String toData,
             String userId
     ) {
-        return CompletableFuture.runAsync(() -> createHistory(cardId, type, fromData, toData, userId));
+        return CompletableFuture.runAsync(() -> createCardHistory(cardId, type, fromData, toData, userId));
+    }
+
+    public CompletableFuture<Void> createColumnHistoryAsync(
+            String columnId,
+            ColumnHistoryType type,
+            String fromData,
+            String toData,
+            String userId
+    ) {
+        return CompletableFuture.runAsync(() -> createColumnHistory(columnId, type, fromData, toData, userId));
     }
 
 
-    public void createHistory(
+    public void createCardHistory(
             String cardId,
             CardHistoryType type,
             String fromData,
@@ -120,6 +139,25 @@ public class CardHistoryService {
         repo.save(cardHistory);
     }
 
+    public void createColumnHistory(
+            String columnId,
+            ColumnHistoryType type,
+            String fromData,
+            String toData,
+            String userId
+    ) {
+        var columnHistory = BoardColumnHistory.builder()
+                .columnId(columnId)
+                .type(type.name())
+                .fromData(fromData)
+                .toData(toData)
+                .createdAt(LocalDateTime.now())
+                .createdBy(userId)
+                .build();
+
+        boardColumnHistoryRepo.save(columnHistory);
+    }
+
     public List<BoardCardHistoryDetails> getCardHistoryDetails(String cardId, boolean isLimit) {
         List<BoardCardHistory.Details> details = null;
 
@@ -152,6 +190,22 @@ public class CardHistoryService {
 
         return notifications.stream()
                 .map(item -> mapper.map(item, NotificationResp.class))
+                .toList();
+    }
+
+    public List<ReviewRequest> getReview(String boardId) {
+        List<BoardCardHistory.Review> reviews = repo.getReviewRequest(boardId);
+
+        return reviews.stream()
+                .map(item -> mapper.map(item, ReviewRequest.class))
+                .toList();
+    }
+
+    public List<DeleteRequest> getDelete(String boardId) {
+        List<BoardCardHistory.Delete> reviews = repo.getCardDeleteRequest(boardId);
+
+        return reviews.stream()
+                .map(item -> mapper.map(item, DeleteRequest.class))
                 .toList();
     }
 }

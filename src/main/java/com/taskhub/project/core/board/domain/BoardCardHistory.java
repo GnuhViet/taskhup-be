@@ -53,4 +53,27 @@ public class BoardCardHistory {
         String getUserFullName();
         String getUserAvatar();
     }
+
+    public interface Review {
+        String getId();
+        String getBoardCardId();
+        String getBoardCardName();
+        LocalDateTime getCreatedAt();
+        String getUserId();
+        String getUserFullName();
+        String getUserAvatar();
+        String getUsername();
+    }
+
+    public interface Delete {
+        String getId();
+        String getRefId();
+        String getRefName();
+        LocalDateTime getCreatedAt();
+        String getType();
+        String getUserId();
+        String getUserFullName();
+        String getUserAvatar();
+        String getUsername();
+    }
 }

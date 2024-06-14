@@ -10,7 +10,6 @@ import com.taskhub.project.core.board.helper.CustomMapper;
 import com.taskhub.project.core.board.repo.*;
 import com.taskhub.project.core.board.resources.api.model.*;
 import com.taskhub.project.core.board.resources.api.model.boardCardApiModel.DeleteCommentReq;
-import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardSelectedLabel;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.file.FileInfoRepo;
@@ -40,8 +39,6 @@ public class BoardService {
     private final CardLabelRepo cardLabelRepo;
     private final WorkSpaceRepo workSpaceRepo;
     private final BoardStarRepo boardStarRepo;
-    private final BoardHistoryRepo boardHistoryRepo;
-    private final FileInfoRepo fileInfoRepo;
 
     private final CloudinaryFileService fileService;
 
@@ -54,7 +51,7 @@ public class BoardService {
     private final BoardCardCommentsRepo boardCardCommentsRepo;
     private final BoardCardHistoryRepo boardCardHistoryRepo;
     private final BoardCardWatchRepo boardCardWatchRepo;
-    private final CardHistoryService cardHistoryService;
+    private final HistoryService historyService;
 
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
         validator.tryValidate(req)
@@ -68,6 +65,8 @@ public class BoardService {
                 .title(req.getTitle())
                 .color(req.getBackground())
                 .workspace(workSpaceRepo.getReferenceById(req.getWorkspaceId()))
+                .isNeedReview(false)
+                .isOnlyMemberEdit(false)
                 .build();
 
         return ServiceResult.ok(mapper.map(
@@ -377,21 +376,9 @@ public class BoardService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public void deleteBoardCard(BoardCard boardCard, boolean isDeleteColum, String userId) throws Exception {
-        if (true) {
-            boardCard.setIsDeleted(true);
-            boardCardRepo.save(boardCard);
-            cardHistoryService.createHistory(
-                    boardCard.getId(),
-                    CardHistoryService.CardHistoryType.DELETE_CARD,
-                    null,
-                    null,
-                    userId
-            );
-            return;
-        }
+    public void deleteBoardCard(BoardCard boardCard, boolean isDeleteColum) throws Exception {
 
-        var boardColumn = boardCard.getBoardColumn();
+
         var boardCardAttachments = boardCardAttachmentsRepo.findByCardId(boardCard.getId()); // check xem co ra attach cua comment khong
         var boardCardComments = boardCardCommentsRepo.findByCardId(boardCard.getId());
         var boardCardHistory = boardCardHistoryRepo.findByCardId(boardCard.getId());
@@ -437,24 +424,24 @@ public class BoardService {
             }
         }
 
-        if (!isDeleteColum) {
-            var cardOrderIds = boardColumn.getCardOrderIds().split(",");
-            var newCardOrderIds = Arrays.stream(cardOrderIds)
-                    .filter(cardId -> !cardId.equals(boardCard.getId()))
-                    .collect(Collectors.joining(","));
-            boardColumn.setCardOrderIds(newCardOrderIds);
-            boardColumnRepo.save(boardColumn);
-        }
-
-        boardHistoryRepo.save(BoardHistory
-                .builder()
-                .action("DELETE_CARD")
-                        .deleteInfo(
-                                boardCard.getId() + " @ " +
-                                        boardCard.getTitle()
-                        )
-                .build()
-        );
+        // if (!isDeleteColum) {
+        //     var cardOrderIds = boardColumn.getCardOrderIds().split(",");
+        //     var newCardOrderIds = Arrays.stream(cardOrderIds)
+        //             .filter(cardId -> !cardId.equals(boardCard.getId()))
+        //             .collect(Collectors.joining(","));
+        //     boardColumn.setCardOrderIds(newCardOrderIds);
+        //     boardColumnRepo.save(boardColumn);
+        // }
+        //
+        // boardHistoryRepo.save(
+        //         .builder()
+        //         .action("DELETE_CARD")
+        //                 .deleteInfo(
+        //                         boardCard.getId() + " @ " +
+        //                                 boardCard.getTitle()
+        //                 )
+        //         .build()
+        // );
 
         boardCardRepo.delete(boardCard);
     }
@@ -468,15 +455,28 @@ public class BoardService {
                 }, ErrorsData.of("boardId", "NotFound", "Board not found"))
                 .throwIfFails();
 
+        var boardCard = boardCardDB[0];
+        var boardColumn = boardCard.getBoardColumn();
+
+        boardCard.setIsDeleted(true);
+        boardCardRepo.save(boardCard);
+
+        var oldCardOrderIds = boardColumn.getCardOrderIds();
+        var cardOrderIds = boardColumn.getCardOrderIds().split(",");
+        var newCardOrderIds = Arrays.stream(cardOrderIds)
+                .filter(cardId -> !cardId.equals(boardCard.getId()))
+                .collect(Collectors.joining(","));
+        boardColumn.setCardOrderIds(newCardOrderIds);
+        boardColumnRepo.save(boardColumn);
 
 
-        try {
-            //
-
-            deleteBoardCard(boardCardDB[0], false, userId);
-        } catch (Exception e) {
-            return ServiceResult.error(e.getMessage());
-        }
+        historyService.createCardHistoryAsync(
+                boardCard.getId(),
+                HistoryService.CardHistoryType.DELETE_CARD,
+                oldCardOrderIds,
+                newCardOrderIds,
+                userId
+        );
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
     }
@@ -509,25 +509,59 @@ public class BoardService {
         var boardColumn = boardColumnDB[0];
 
         var board = boardColumn.getBoard();
-        var boardCards = boardColumn.getBoardCards();
+        // var boardCards = boardColumn.getBoardCards();
 
-        for (var boardCard : boardCards) {
-            try {
-                deleteBoardCard(boardCard, true, userId);
-            } catch (Exception e) {
-                return ServiceResult.error(e.getMessage());
-            }
-        }
+        // for (var boardCard : boardCards) {
+        //     try {
+        //         deleteBoardCard(boardCard, true);
+        //     } catch (Exception e) {
+        //         return ServiceResult.error(e.getMessage());
+        //     }
+        // }
 
+        var oldColumnOrderIds = board.getColumnOrderIds();
         var columnOrderIds = board.getColumnOrderIds().split(",");
         var newColumnOrderIds = Arrays.stream(columnOrderIds)
                 .filter(columnId -> !columnId.equals(boardColumn.getId()))
                 .collect(Collectors.joining(","));
         board.setColumnOrderIds(newColumnOrderIds);
 
-        boardColumnRepo.delete(boardColumn);
+
+        historyService.createColumnHistoryAsync(
+                boardColumn.getId(),
+                HistoryService.ColumnHistoryType.DELETE_COLUMN,
+                oldColumnOrderIds,
+                newColumnOrderIds,
+                userId
+        );
+
+        // boardColumnRepo.delete(boardColumn);
+
+        boardColumn.setIsDeleted(true);
+        boardColumnRepo.save(boardColumn);
         boardRepo.save(board);
 
         return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> getManageInfo(ManageInfoReq req) {
+        var boardDb = new Board[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardDb[0] = boardRepo.findById(req.getBoardId()).orElse(null);
+                    return boardDb[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        var resp = new BoardManageResp();
+
+        resp.setIsOnlyMemberEdit(board.getIsOnlyMemberEdit());
+        resp.setIsNeedReview(board.getIsNeedReview());
+        resp.setReviewRequest(historyService.getReview(req.getBoardId()));
+        resp.setDeleteRequest(historyService.getDelete(req.getBoardId()));
+
+        return ServiceResult.ok(resp);
     }
 }

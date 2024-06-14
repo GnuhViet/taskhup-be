@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface BoardRepo extends JpaRepository<Board, String> {
@@ -88,4 +89,12 @@ public interface BoardRepo extends JpaRepository<Board, String> {
             and bcm.user_id = :userId
     """, nativeQuery = true)
     boolean isBoardMember(String boardId, String userId);
+
+
+    @Query(value = """
+        select *
+        from board b
+            join board
+    """, nativeQuery = true)
+    Optional<Board> findByCardId(String cardId);
 }
