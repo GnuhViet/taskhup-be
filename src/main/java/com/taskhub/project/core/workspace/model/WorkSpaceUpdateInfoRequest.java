@@ -10,4 +10,6 @@ public class WorkSpaceUpdateInfoRequest {
     private String website;
     @NotBlank(message = "Description is required")
     private String description;
+    private String startDate;
+    private String endDate;
 }

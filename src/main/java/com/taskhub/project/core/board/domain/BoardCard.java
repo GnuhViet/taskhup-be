@@ -12,6 +12,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Table(name = "board_card")
 public class BoardCard {
     @Id
@@ -55,6 +56,8 @@ public class BoardCard {
     @JoinColumn(name = "board_column_id")
     private BoardColumn boardColumn;
 
+    private Boolean isDeleted;
+
     public interface BoardCardInfo {
         String getId();
         String getTitle();
@@ -68,6 +71,7 @@ public class BoardCard {
         Integer getAttachmentCount();
         String getCheckListsItems();
         String getColumnId();
+        Boolean getIsDeleted();
     }
 
     public interface BoardCardDetail {

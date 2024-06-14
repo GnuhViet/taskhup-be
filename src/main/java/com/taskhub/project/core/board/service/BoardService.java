@@ -40,6 +40,7 @@ public class BoardService {
     private final CardLabelRepo cardLabelRepo;
     private final WorkSpaceRepo workSpaceRepo;
     private final BoardStarRepo boardStarRepo;
+    private final BoardHistoryRepo boardHistoryRepo;
     private final FileInfoRepo fileInfoRepo;
 
     private final CloudinaryFileService fileService;
@@ -53,6 +54,7 @@ public class BoardService {
     private final BoardCardCommentsRepo boardCardCommentsRepo;
     private final BoardCardHistoryRepo boardCardHistoryRepo;
     private final BoardCardWatchRepo boardCardWatchRepo;
+    private final CardHistoryService cardHistoryService;
 
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
         validator.tryValidate(req)
@@ -375,7 +377,20 @@ public class BoardService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    public void deleteBoardCard(BoardCard boardCard, boolean isDeleteColum) throws Exception {
+    public void deleteBoardCard(BoardCard boardCard, boolean isDeleteColum, String userId) throws Exception {
+        if (true) {
+            boardCard.setIsDeleted(true);
+            boardCardRepo.save(boardCard);
+            cardHistoryService.createHistory(
+                    boardCard.getId(),
+                    CardHistoryService.CardHistoryType.DELETE_CARD,
+                    null,
+                    null,
+                    userId
+            );
+            return;
+        }
+
         var boardColumn = boardCard.getBoardColumn();
         var boardCardAttachments = boardCardAttachmentsRepo.findByCardId(boardCard.getId()); // check xem co ra attach cua comment khong
         var boardCardComments = boardCardCommentsRepo.findByCardId(boardCard.getId());
@@ -431,6 +446,16 @@ public class BoardService {
             boardColumnRepo.save(boardColumn);
         }
 
+        boardHistoryRepo.save(BoardHistory
+                .builder()
+                .action("DELETE_CARD")
+                        .deleteInfo(
+                                boardCard.getId() + " @ " +
+                                        boardCard.getTitle()
+                        )
+                .build()
+        );
+
         boardCardRepo.delete(boardCard);
     }
 
@@ -443,8 +468,12 @@ public class BoardService {
                 }, ErrorsData.of("boardId", "NotFound", "Board not found"))
                 .throwIfFails();
 
+
+
         try {
-            deleteBoardCard(boardCardDB[0], false);
+            //
+
+            deleteBoardCard(boardCardDB[0], false, userId);
         } catch (Exception e) {
             return ServiceResult.error(e.getMessage());
         }
@@ -484,7 +513,7 @@ public class BoardService {
 
         for (var boardCard : boardCards) {
             try {
-                deleteBoardCard(boardCard, true);
+                deleteBoardCard(boardCard, true, userId);
             } catch (Exception e) {
                 return ServiceResult.error(e.getMessage());
             }

@@ -29,6 +29,10 @@ public class WorkSpace {
 
     private String avatarId;
 
+    private LocalDateTime startDate;
+
+    private LocalDateTime endDate;
+
     @OneToMany(
             fetch = FetchType.LAZY,
             mappedBy = "workspace"
@@ -52,8 +56,11 @@ public class WorkSpace {
         String getId();
         String getTitle();
         String getDescription();
+        LocalDateTime getStartDate();
+        LocalDateTime getEndDate();
         String getOwnerName();
         String getWebsite();
         String getAvatarUrl();
+        Long getMemberCount();
     }
 }

@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -42,6 +43,7 @@ public class WorkSpaceService {
     private final BoardRepo boardRepo;
     private final WorkSpaceMemberRepo workSpaceMemberRepo;
     private final FileService fileService;
+    public static DateTimeFormatter dateTimeFormater = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public WorkSpaceService(
             ValidatorService validator,
@@ -121,6 +123,8 @@ public class WorkSpaceService {
         workSpace.setTitle(request.getTitle());
         workSpace.setDescription(request.getDescription());
         workSpace.setWebsite(request.getWebsite());
+        workSpace.setStartDate(LocalDateTime.parse(request.getStartDate(), dateTimeFormater));
+        workSpace.setEndDate(LocalDateTime.parse(request.getEndDate(), dateTimeFormater));
 
         workSpaceRepo.save(workSpace);
         return ServiceResult.ok("Workspace updated successfully");

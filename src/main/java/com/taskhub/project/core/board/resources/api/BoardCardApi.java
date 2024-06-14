@@ -140,6 +140,7 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
+    @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-cover")
     public ResponseEntity<?> updateCover(
             @RequestParam("file") MultipartFile file,
@@ -155,6 +156,7 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
+    @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/remove-cover")
     public ResponseEntity<?> updateCover(
             @RequestBody RemoveCoverRequest request,
@@ -197,6 +199,7 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
+    @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/upload-attachment")
     public ResponseEntity<?> uploadAttachment(
             @RequestParam("file") MultipartFile file,
@@ -218,6 +221,7 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
+    @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/delete-upload-attachment")
     public ResponseEntity<?> deleteAttachment(@RequestBody DeleteAttachmentReq request, Principal principal) {
         var response = service.deleteAttachment(request, principal.getName());

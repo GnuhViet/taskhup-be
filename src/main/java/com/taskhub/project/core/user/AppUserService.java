@@ -1,13 +1,20 @@
 package com.taskhub.project.core.user;
 
 import com.taskhub.project.aspect.exception.model.ErrorsData;
+import com.taskhub.project.common.Constants;
 import com.taskhub.project.common.service.model.ServiceResult;
 import com.taskhub.project.core.auth.authentication.dtos.UpdateInfoRequest;
 import com.taskhub.project.core.auth.authorization.constans.DefaultFile;
+import com.taskhub.project.core.board.service.CardHistoryService;
 import com.taskhub.project.core.file.FileService;
 import com.taskhub.project.core.file.domain.FileInfo;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.user.entities.AppUser;
+import com.taskhub.project.core.user.entities.UserNotificationRead;
+import com.taskhub.project.core.user.entities.UserNotificationReadKey;
+import com.taskhub.project.core.user.model.MarkAsReadNotificationReq;
+import com.taskhub.project.core.user.model.NotificationReq;
+import com.taskhub.project.core.user.repo.UserNotificationReadRepo;
 import com.taskhub.project.core.user.repo.UserRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -22,16 +29,22 @@ import org.springframework.web.multipart.MultipartFile;
 public class AppUserService {
     private final UserRepo userRepo;
     private final FileService fileService;
+    private final CardHistoryService cardHistoryService;
     private final ValidatorService validator;
+    private final UserNotificationReadRepo userNotificationReadRepo;
 
     public AppUserService(
             UserRepo userRepo,
             @Qualifier("cloudinaryFileService") FileService fileService,
-            ValidatorService validator
+            ValidatorService validator,
+            CardHistoryService cardHistoryService,
+            UserNotificationReadRepo userNotificationReadRepo
     ) {
         this.userRepo = userRepo;
         this.fileService = fileService;
         this.validator = validator;
+        this.cardHistoryService = cardHistoryService;
+        this.userNotificationReadRepo = userNotificationReadRepo;
     }
 
     public ServiceResult<?> getUserInfo(String id) {
@@ -109,5 +122,36 @@ public class AppUserService {
         userRepo.save(user);
 
         return ServiceResult.ok("User info updated successfully");
+    }
+
+    public ServiceResult<?> getNotifications(NotificationReq req, String userId) {
+        if (req.getIsOnlyUnread() == null) {
+            return ServiceResult.error("Invalid request");
+        }
+
+        return ServiceResult
+                .ok(cardHistoryService.getUserNotification(userId, req.getIsOnlyUnread()));
+    }
+
+    public ServiceResult<?> markAsReadNotification(MarkAsReadNotificationReq request, String userId) {
+        if (request.getNotificationIds() == null || request.getNotificationIds().isEmpty()) {
+            return ServiceResult.error("Invalid request");
+        }
+
+        for (var id : request.getNotificationIds()) {
+            var key = new UserNotificationReadKey(userId, id);
+
+            if (userNotificationReadRepo.existsById(key)) {
+                continue;
+            }
+            userNotificationReadRepo.save(
+                    UserNotificationRead.builder()
+                            .id(key)
+                            .build()
+            );
+        }
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+
     }
 }

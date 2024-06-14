@@ -54,4 +54,42 @@ public interface BoardCardHistoryRepo extends JpaRepository<BoardCardHistory, St
         order by bch.created_at desc
     """, nativeQuery = true)
     List<BoardCardHistory.Details> findDetailsByCardId(String cardId);
+
+
+
+    @Query(value = """
+        select
+            bch.id as id,
+            bch.board_card_id as boardCardId,
+            bc.title as boardCardName,
+            bch.type as type,
+            bch.to_data as toData,
+            bch.created_at as actionDate,
+            bch.created_by as userId,
+            au.id as user_id,
+            au.username as userName,
+            au.full_name as userFullName,
+            fi.url as userAvatar
+        from board_card_history bch
+            join board_card bc on bch.board_card_id = bc.id
+            join app_user au on bch.created_by = au.id
+            left join file_info fi on au.avatar = fi.id
+        where bch.board_card_id in (
+            select bcw1.card_id
+            from board_card_watch bcw1
+            where bcw1.user_id = :userId
+        )
+        and (
+            IF(:isUnreadOnly = true,
+                bch.id not in (
+                    select unr.history_id from user_notification_read unr
+                    where unr.user_id = :userId
+                    and unr.history_id = bch.id
+                ),
+                true
+            )
+        )
+        order by bch.created_at desc
+    """, nativeQuery = true)
+    List<BoardCardHistory.Notification> findNotificationByUserId(String userId, boolean isUnreadOnly);
 }

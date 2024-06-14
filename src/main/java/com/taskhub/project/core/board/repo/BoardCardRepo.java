@@ -74,7 +74,8 @@ public interface BoardCardRepo extends JpaRepository<BoardCard, String> {
                 and bca1.ref_id = bc.id
             ) as attachmentCount,
             bc.check_list_value as checkListsItems,
-            bc.board_column_id as columnId
+            bc.board_column_id as columnId,
+            bc.is_deleted as isDeleted
         from board_card bc
             left join file_info fi on bc.cover = fi.id
         where board_column_id in :columnId

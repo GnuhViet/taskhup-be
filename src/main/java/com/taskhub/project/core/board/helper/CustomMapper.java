@@ -60,7 +60,16 @@ public class CustomMapper {
             var boardCards = cards.get(column.getId());
 
             if (boardCards != null) {
-                columnDto.setCards(boardCards.stream().map(toCardDto).toList());
+                columnDto.setCards(boardCards.stream()
+                                .filter(item -> {
+                                    if (item.getIsDeleted() == null) {
+                                        return true;
+                                    }
+                                    return !item.getIsDeleted();
+                                })
+                        .map(toCardDto)
+                        .toList()
+                );
             }
             return columnDto;
         });

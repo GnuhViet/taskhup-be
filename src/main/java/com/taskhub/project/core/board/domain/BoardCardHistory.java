@@ -34,7 +34,20 @@ public class BoardCardHistory {
         String getType();
         String getToData();
         LocalDateTime getActionDate();
+        String getUserId();
+        String getUserName();
+        String getUserFullName();
+        String getUserAvatar();
+    }
 
+    public interface Notification {
+        String getId();
+        String getBoardCardId();
+        String getBoardCardName();
+        String getType();
+        String getToData();
+        LocalDateTime getActionDate();
+        Boolean getIsRead();
         String getUserId();
         String getUserName();
         String getUserFullName();

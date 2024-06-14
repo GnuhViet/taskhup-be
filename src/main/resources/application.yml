@@ -66,8 +66,8 @@ app:
   jwt-secret: 413F4428472B4B6250645367566B5970337336763979244226452948404D6351
 #  jwt-expiration-ms: 3000  #3 second  #60000 #1 min
 #  jwt-refresh-expiration-ms: 120000 #2 min
-  jwt-expiration-ms: 3600000
-  jwt-refresh-expiration-ms: 86400000
+  jwt-expiration-ms: 86400000
+  jwt-refresh-expiration-ms: 172800000
   jwt-alg: HS256 #RSA #HS256
   rsa-key-length: 2048
 

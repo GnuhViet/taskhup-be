@@ -75,7 +75,15 @@ public interface WorkSpaceRepo extends JpaRepository<WorkSpace, String> {
             ws.description as description,
             (select u.username from app_user u where u.id = ws.owner_id) as ownerName,
             ws.website as website,
-            fi.url as avatarUrl
+            fi.url as avatarUrl,
+            ws.start_date as startDate,
+            ws.end_date as endDate,
+            (
+                select count(*)
+                from workspace_member wm
+                where wm.workspace_id = ws.id
+                and wm.invite_status = 'ACCEPTED'
+            ) as memberCount
         from work_space ws
             left join file_info fi on ws.avatar_id = fi.id
         where ws.id = :workSpaceId

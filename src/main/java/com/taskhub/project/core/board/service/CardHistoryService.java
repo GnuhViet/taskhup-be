@@ -5,7 +5,9 @@ import com.taskhub.project.core.board.repo.BoardCardCommentsRepo;
 import com.taskhub.project.core.board.repo.BoardCardHistoryRepo;
 import com.taskhub.project.core.board.repo.CardCustomFieldRepo;
 import com.taskhub.project.core.board.resources.api.model.boardCardDetails.BoardCardHistoryDetails;
+import com.taskhub.project.core.user.model.NotificationResp;
 import lombok.AllArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ public class CardHistoryService {
     private final BoardCardHistoryRepo repo;
     private final CardCustomFieldRepo cardCustomFieldRepo;
     private final BoardCardCommentsRepo boardCardCommentsRepo;
+    private final ModelMapper mapper;
 
     public static enum CardHistoryType {
         UPDATE_TITLE,
@@ -43,6 +46,7 @@ public class CardHistoryService {
         DELETE_ATTACHMENT_COMMENT,
         CREATE_COMMENT,
         DELETE_COMMENT,
+        DELETE_CARD
     }
 
     public CompletableFuture<Void> createHistoryAsync(
@@ -140,5 +144,14 @@ public class CardHistoryService {
         }
 
         return resp;
+    }
+
+    public List<NotificationResp> getUserNotification(String userId, boolean isUnreadOnly) {
+        List<BoardCardHistory.Notification> notifications =
+                repo.findNotificationByUserId(userId, isUnreadOnly);
+
+        return notifications.stream()
+                .map(item -> mapper.map(item, NotificationResp.class))
+                .toList();
     }
 }
