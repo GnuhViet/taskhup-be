@@ -8,14 +8,12 @@ import java.util.List;
 @Data
 public class BoardDto {
     private String id;
-    private String name;
     private String title;
-    private String description;
-    private String type;
-    private String ownerIds;
-    private String memberIds;
+    private String shortDescription;
     private String columnOrderIds;
     private String color;
+    private Boolean isNeedReview;
+    private Boolean isOnlyMemberEdit;
     private List<BoardColumnDto> columns;
     private LocalDateTime startDate;
     private LocalDateTime endDate;

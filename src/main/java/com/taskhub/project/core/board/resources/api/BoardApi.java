@@ -136,4 +136,35 @@ public class BoardApi {
         var resp = boardService.getManageInfo(request);
         return new ResponseEntity<>(resp, resp.getHttpStatus());
     }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/update-board-ability")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> getManageInfo(
+            @RequestBody UpdateBoardAbility request
+    ) {
+        var resp = boardService.updateBoardAbility(request);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/action-review")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> actionReview(
+            @RequestBody ActionReviewRequest request
+    ) {
+        var resp = boardService.actionReview(request);
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
+
+    @Secured(Constants.ActionString.EDIT_BOARD)
+    @PostMapping("/action-delete")
+    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<?> actionDelete(
+            @RequestBody ActionDeleteReq request,
+            Principal principal
+    ) {
+        var resp = boardService.actionDelete(request, principal.getName());
+        return new ResponseEntity<>(resp, resp.getHttpStatus());
+    }
 }

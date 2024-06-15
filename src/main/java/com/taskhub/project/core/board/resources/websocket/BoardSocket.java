@@ -1,5 +1,6 @@
 package com.taskhub.project.core.board.resources.websocket;
 
+import com.taskhub.project.common.Constants;
 import com.taskhub.project.common.socket.model.SocketResponse;
 import com.taskhub.project.core.board.service.BoardService;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
@@ -9,6 +10,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 
 @Controller
@@ -29,6 +31,7 @@ public class BoardSocket {
     private final SimpMessageSendingOperations messageTemplate;
     private final BoardService boardService;
 
+    @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/createColumn")
     public void createColumn(
             @DestinationVariable String boardId,
@@ -44,6 +47,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
+    @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/moveColumn")
     public void moveColumn(
             @DestinationVariable String boardId,
@@ -59,6 +63,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
+    @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/createCard")
     public void createCard(
             @DestinationVariable String boardId,
@@ -74,6 +79,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
+    @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/moveCard")
     public void moveCard(
             @DestinationVariable String boardId,

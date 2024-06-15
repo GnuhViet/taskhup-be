@@ -12,7 +12,6 @@ import com.taskhub.project.core.board.resources.api.model.*;
 import com.taskhub.project.core.board.resources.api.model.boardCardApiModel.DeleteCommentReq;
 import com.taskhub.project.core.board.resources.websocket.model.BoardSocket.*;
 import com.taskhub.project.common.service.model.ServiceResult;
-import com.taskhub.project.core.file.FileInfoRepo;
 import com.taskhub.project.core.file.impl.CloudinaryFileService;
 import com.taskhub.project.core.helper.validator.ValidatorService;
 import com.taskhub.project.core.workspace.WorkSpaceRepo;
@@ -39,7 +38,13 @@ public class BoardService {
     private final CardLabelRepo cardLabelRepo;
     private final WorkSpaceRepo workSpaceRepo;
     private final BoardStarRepo boardStarRepo;
+    private final BoardCardAttachmentsRepo boardCardAttachmentsRepo;
+    private final BoardCardCommentsRepo boardCardCommentsRepo;
+    private final BoardCardHistoryRepo boardCardHistoryRepo;
+    private final BoardColumHistoryRepo boardColumnHistoryRepo;
+    private final BoardCardWatchRepo boardCardWatchRepo;
 
+    private final HistoryService historyService;
     private final CloudinaryFileService fileService;
 
     private final ValidatorService validator;
@@ -47,11 +52,6 @@ public class BoardService {
     private final ModelMapper mapper;
     public static DateTimeFormatter dateFormater = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final String BOARD_DEFAULT_COLOR = "#1976d2";
-    private final BoardCardAttachmentsRepo boardCardAttachmentsRepo;
-    private final BoardCardCommentsRepo boardCardCommentsRepo;
-    private final BoardCardHistoryRepo boardCardHistoryRepo;
-    private final BoardCardWatchRepo boardCardWatchRepo;
-    private final HistoryService historyService;
 
     public ServiceResult<BoardCreateResp> createBoard(BoardCreateReq req, String userId) {
         validator.tryValidate(req)
@@ -563,5 +563,134 @@ public class BoardService {
         resp.setDeleteRequest(historyService.getDelete(req.getBoardId()));
 
         return ServiceResult.ok(resp);
+    }
+
+    public ServiceResult<?> updateBoardAbility(UpdateBoardAbility req) {
+        var boardDb = new Board[1];
+        validator.tryValidate(req)
+                .withConstraint(() -> {
+                    boardDb[0] = boardRepo.findById(req.getBoardId()).orElse(null);
+                    return boardDb[0] == null;
+                }, ErrorsData.of("boardId", "NotFound", "Board not found"))
+                .throwIfFails();
+
+        var board = boardDb[0];
+
+        board.setIsNeedReview(req.getIsNeedReview());
+        board.setIsOnlyMemberEdit(req.getIsOnlyMemberEdit());
+
+        boardRepo.save(board);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> actionReview(ActionReviewRequest request) {
+        var cardDb = new BoardCard[1];
+        validator.tryValidate(request)
+                .withConstraint(() -> {
+                    cardDb[0] = boardCardRepo.findById(request.getCardId()).orElse(null);
+                    return cardDb[0] == null;
+                }, ErrorsData.of("cardId", "NotFound", "Card not found"))
+                .throwIfFails();
+
+        var card = cardDb[0];
+
+        if (request.getType().equals("ACCEPT")) {
+            card.setWorkingStatus(1);
+        } else {
+            card.setWorkingStatus(null);
+        }
+
+        boardCardRepo.save(card);
+
+        return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+    }
+
+    public ServiceResult<?> actionDelete(ActionDeleteReq req, String userId) {
+
+        if ( req.getType().equals(HistoryService.CardHistoryType.DELETE_CARD.name())) {
+            var cardHistoryDb = new BoardCardHistory[1];
+
+            validator.tryValidate(req)
+                    .withConstraint(
+                            () -> {
+                                cardHistoryDb[0] = boardCardHistoryRepo.findById(req.getId()).orElse(null);
+                                return cardHistoryDb[0] == null;
+                            },
+                            ErrorsData.of("id", "NotFound", "Card history not found")
+                    )
+                    .throwIfFails();
+
+            var cardHistory = cardHistoryDb[0];
+            var boardCard = boardCardRepo.findById(cardHistory.getBoardCardId()).orElse(null);
+
+            if (boardCard == null) {
+                return ServiceResult.error("Card not found");
+            }
+
+            if (req.getActionType().equals("ACCEPT")) {
+                try {
+                    deleteBoardCard(boardCard, false);
+                } catch (Exception e) {
+                    return ServiceResult.error("INTERNAL_SERVER_ERROR");
+                }
+            } else {
+                var colum = boardCard.getBoardColumn();
+
+                colum.setCardOrderIds(cardHistory.getFromData());
+                boardColumnRepo.save(colum);
+
+                boardCard.setIsDeleted(null);
+                boardCardRepo.save(boardCard);
+            }
+
+            return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+        }
+
+
+        if (req.getType().equals(HistoryService.ColumnHistoryType.DELETE_COLUMN.name())) {
+            var columHistoryDb = new BoardColumnHistory[1];
+            validator.tryValidate(req)
+                    .withConstraint(
+                            () -> {
+                                columHistoryDb[0] = boardColumnHistoryRepo.findById(req.getId()).orElse(null);
+                                return columHistoryDb[0] == null;
+                            },
+                            ErrorsData.of("id", "NotFound", "Column history not found")
+                    )
+                    .throwIfFails();
+
+            var columHistory = columHistoryDb[0];
+            var colum = boardColumnRepo.findById(columHistory.getColumnId()).orElse(null);
+
+            if (colum == null) {
+                return ServiceResult.error("Column not found");
+            }
+
+            if (req.getActionType().equals("ACCEPT")) {
+                var boardCards = colum.getBoardCards();
+                for (var boardCard : boardCards) {
+                    try {
+                        deleteBoardCard(boardCard, true);
+                    } catch (Exception e) {
+                        return ServiceResult.error(e.getMessage());
+                    }
+                }
+            } else {
+                var board = colum.getBoard();
+
+                board.setColumnOrderIds(columHistory.getFromData());
+                boardRepo.save(board);
+
+                colum.setIsDeleted(null);
+                boardColumnRepo.save(colum);
+            }
+
+
+            return ServiceResult.ok(Constants.ServiceStatus.SUCCESS);
+        }
+
+
+        return ServiceResult.badRequest();
     }
 }

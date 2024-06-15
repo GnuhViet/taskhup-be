@@ -112,12 +112,19 @@ public interface BoardCardHistoryRepo extends JpaRepository<BoardCardHistory, St
             join board_card_history bch on bcard.id = bch.board_card_id
             join app_user au on bch.created_by = au.id
             left join file_info fi on au.avatar = fi.id
+            join (
+                select board_card_id, max(created_at) as max_created_at
+                from board_card_history
+                where type = 'UPDATE_WORKING_STATUS'
+                group by board_card_id
+            ) max_bch on bch.board_card_id = max_bch.board_card_id and bch.created_at = max_bch.max_created_at
         where bcard.working_status = '2'
         and b.id = :boardId
+        and bch.type = 'UPDATE_WORKING_STATUS'
     """, nativeQuery = true)
     List<BoardCardHistory.Review> getReviewRequest(String boardId);
 
-
+    // check query
     @Query(value = """
         (
         select
@@ -136,9 +143,16 @@ public interface BoardCardHistoryRepo extends JpaRepository<BoardCardHistory, St
             join board b on bcol.board_id = b.id
             join app_user au on bch.created_by = au.id
             left join file_info fi on au.avatar = fi.id
+            join (
+                select board_card_id, max(created_at) as max_created_at
+                from board_card_history
+                where type = 'DELETE_CARD'
+                group by board_card_id
+            ) max_bch on bch.board_card_id = max_bch.board_card_id and bch.created_at = max_bch.max_created_at
         where
             bch.type = 'DELETE_CARD'
             and b.id = :boardId
+            and bcard.is_deleted = true
         )
         union all
         (
@@ -157,10 +171,22 @@ public interface BoardCardHistoryRepo extends JpaRepository<BoardCardHistory, St
             join board b on bcol.board_id = b.id
             join app_user au on bch.created_by = au.id
             left join file_info fi on au.avatar = fi.id
+            join (
+                select bch2.column_id,
+                       max(bch2.created_at) as max_created_at
+                from board_column_history bch2
+                where type = 'DELETE_COLUMN'
+                group by bch2.column_id
+            ) max_bch on bch.column_id = max_bch.column_id and bch.created_at = max_bch.max_created_at
         where
             bch.type = 'DELETE_COLUMN'
             and b.id = :boardId
+            and bcol.is_deleted = true
         )
     """, nativeQuery = true)
+
+
+
+
     List<BoardCardHistory.Delete> getCardDeleteRequest(String boardId);
 }
