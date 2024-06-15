@@ -29,6 +29,7 @@ public interface UserRepo extends JpaRepository<AppUser, String> {
 
     @Query(value = """
     select
+        au.id as `id`,
         au.username as `username`,
         au.email as `email`,
         au.full_name as `fullName`,

@@ -61,6 +61,7 @@ public class AppUser {
     }
 
     public interface AppUserInfo {
+        String getId();
         String getUsername();
         String getEmail();
         String getFullName();

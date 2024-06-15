@@ -12,6 +12,7 @@ public class Constants {
         public static final String EDIT_ROLE = "EDIT_ROLE";
         public static final String EDIT_BOARD = "EDIT_BOARD";
         public static final String DELETE_BOARD = "DELETE_BOARD";
+        public static final String ASSIGN_MEMBER = "ASSIGN_MEMBER";
         public static final String EDIT_CARD_TEMPLATE = "EDIT_CARD_TEMPLATE";
         public static final String EDIT_CARD = "EDIT_CARD";
     }

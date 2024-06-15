@@ -107,7 +107,7 @@ public class BoardCardApi {
         return new ResponseEntity<>(response, response.getHttpStatus());
     }
 
-    @Secured(Constants.ActionString.EDIT_CARD)
+    // @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-watch")
     @Operation(summary = "Update watch", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateWatchCard(
