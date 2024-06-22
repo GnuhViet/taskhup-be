@@ -48,6 +48,7 @@ public class WorkSpaceResource {
     }
 
     @PostMapping("/update-info")
+    @Operation(summary = "Update workspace info", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> updateWorkSpaceInfo(
             @RequestBody WorkSpaceUpdateInfoRequest request,
             Authentication authentication
@@ -74,7 +75,7 @@ public class WorkSpaceResource {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @GetMapping("/join-request")
-    @Operation(summary = "get workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "get workspace join request", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getWorkSpaceMemberWaiting(Authentication authentication) {
         var response = workSpaceService.getWorkSpaceMemberWaiting(String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -82,7 +83,7 @@ public class WorkSpaceResource {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @PostMapping("/join-request/accept")
-    @Operation(summary = "get workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "accept workspace join request", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> acceptWorkspaceMember(@RequestBody JoinRequestADRequest req, Authentication authentication) {
         var response = workSpaceService.acceptWorkspaceMember(req.getUserIds(), String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -90,7 +91,7 @@ public class WorkSpaceResource {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @PostMapping("/join-request/deny")
-    @Operation(summary = "get workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "deny workspace join request", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> denyWorkspaceMember(@RequestBody JoinRequestADRequest req, Authentication authentication) {
         var response = workSpaceService.denyWorkspaceMember(req.getUserIds(), String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -106,7 +107,7 @@ public class WorkSpaceResource {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @PostMapping("/active-member")
-    @Operation(summary = "disabled workspace member", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "active workspace member", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> activeWorkspaceMember(@RequestBody DisabledMemberRequest req, Authentication authentication) {
         var response = workSpaceService.activeWorkspaceMember(req, String.valueOf(authentication.getCredentials()));
         return new ResponseEntity<>(response, response.getHttpStatus());

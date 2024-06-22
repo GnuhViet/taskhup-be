@@ -71,7 +71,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/update-board-info")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update board info", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getBoardInfo(
             @RequestBody BoardInfoUpdateReq request,
             Principal principal
@@ -82,7 +82,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/update-board-background")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update board background", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getBoardInfo(
             @RequestBody BoardBgUpdateReq request,
             Principal principal
@@ -94,7 +94,7 @@ public class BoardApi {
     // delete card
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/delete-board-card")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Delete board card", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getBoardInfo(
             @RequestBody BoardCardDeleteReq request,
             Principal principal
@@ -106,7 +106,7 @@ public class BoardApi {
     // update colum title
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/update-colum-title")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update column title", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getBoardInfo(
             @RequestBody UpdateColumTitleReq request,
             Principal principal
@@ -118,7 +118,7 @@ public class BoardApi {
     // detele collumn
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/delete-colum")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Delete column", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getBoardInfo(
             @RequestBody DeleteCommentReq request,
             Principal principal
@@ -129,7 +129,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/manage-board")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get board manage info", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getManageInfo(
             @RequestBody ManageInfoReq request
     ) {
@@ -139,7 +139,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/update-board-ability")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update board ability", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getManageInfo(
             @RequestBody UpdateBoardAbility request
     ) {
@@ -149,7 +149,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/action-review")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update board review status", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> actionReview(
             @RequestBody ActionReviewRequest request
     ) {
@@ -159,7 +159,7 @@ public class BoardApi {
 
     @Secured(Constants.ActionString.EDIT_BOARD)
     @PostMapping("/action-delete")
-    @Operation(summary = "Get board info", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update board delete status", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> actionDelete(
             @RequestBody ActionDeleteReq request,
             Principal principal

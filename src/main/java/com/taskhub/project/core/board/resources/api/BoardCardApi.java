@@ -33,7 +33,7 @@ public class BoardCardApi {
     }
 
     @PostMapping("/card-history")
-    @Operation(summary = "Get card details", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get card history", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> getCardHistory(
             @RequestBody CardDetailRequest request
     ) {
@@ -54,7 +54,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/select-template")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "select card template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectTemplate(
             @RequestBody SelectTemplateRequest request,
             Principal principal
@@ -65,7 +65,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/select-label")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "select card label", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectLabel(
             @RequestBody SelectCardLabelRequest request,
             Principal principal
@@ -76,7 +76,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/select-field")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "select card field", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> selectField(
             @RequestBody SelectCardFieldRequest request,
             Principal principal
@@ -87,7 +87,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-field-value")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update select field value", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateFieldValue(
             @RequestBody UpdateFieldValueRequest request,
             Principal principal
@@ -98,7 +98,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-members")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card member", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateMembers(
             @RequestBody UpdateMemberRequest request,
             Principal principal
@@ -109,7 +109,7 @@ public class BoardCardApi {
 
     // @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-watch")
-    @Operation(summary = "Update watch", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Update card watch", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateWatchCard(
             @RequestBody UpdateWatchCardReq request,
             Principal principal
@@ -120,7 +120,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-checklist")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card checklist", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateChecklist(
             @RequestBody UpdateCheckListReq request,
             Principal principal
@@ -131,7 +131,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-checklist-value")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card checklist value", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateCheckListValue(
             @RequestBody UpdateCheckListValueReq request,
             Principal principal
@@ -142,6 +142,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-cover")
+    @Operation(summary = "update card cover", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> updateCover(
             @RequestParam("file") MultipartFile file,
             @RequestParam("boardCardId") String boardCardId,
@@ -158,6 +159,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/remove-cover")
+    @Operation(summary = "remove card cover", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> updateCover(
             @RequestBody RemoveCoverRequest request,
             Principal principal
@@ -168,7 +170,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-card-date")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card date", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateCardDate(
             @RequestBody UpdateCardDateRequest request,
             Principal principal
@@ -179,7 +181,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-working-status")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card working status", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateWorkingStatus(
             @RequestBody UpdateWorkingStatusReq request,
             Principal principal
@@ -190,7 +192,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/update-description")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "update card description", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> updateDescription(
             @RequestBody UpdateDescriptionReq request,
             Principal principal
@@ -200,6 +202,7 @@ public class BoardCardApi {
     }
 
     @Secured(Constants.ActionString.EDIT_CARD)
+    @Operation(summary = "update card/comment attachment", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/upload-attachment")
     public ResponseEntity<?> uploadAttachment(
             @RequestParam("file") MultipartFile file,
@@ -222,6 +225,7 @@ public class BoardCardApi {
     }
 
     @Secured(Constants.ActionString.EDIT_CARD)
+    @Operation(summary = "delete card/comment attachment", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/delete-upload-attachment")
     public ResponseEntity<?> deleteAttachment(@RequestBody DeleteAttachmentReq request, Principal principal) {
         var response = service.deleteAttachment(request, principal.getName());
@@ -231,7 +235,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/create-comment")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "create card comment", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> createComment(
             @RequestBody CreateCommentReq request,
             Principal principal
@@ -242,7 +246,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/edit-comment-content")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "edit card comment content", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> editCommentContent(
             @RequestBody EditCommentContentReq request,
             Principal principal
@@ -253,7 +257,7 @@ public class BoardCardApi {
 
     @Secured(Constants.ActionString.EDIT_CARD)
     @PostMapping("/delete-comment")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "delete card comment", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> deleteComment(
             @RequestBody DeleteCommentReq request,
             Principal principal

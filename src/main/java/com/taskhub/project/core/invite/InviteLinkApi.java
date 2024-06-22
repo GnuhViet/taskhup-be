@@ -35,7 +35,7 @@ public class InviteLinkApi {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @GetMapping("/get-link/{destinationId}")
-    @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "get invite link", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> getInviteLink(Principal principal, @PathVariable String destinationId) {
         var resp = inviteLinkService.getInviteLink(principal.getName(), destinationId);
         return new ResponseEntity<>(resp, resp.getHttpStatus());
@@ -43,7 +43,7 @@ public class InviteLinkApi {
 
     @Secured(Constants.ActionString.MANAGE_USER)
     @PostMapping("/send-email")
-    @Operation(summary = "create invite link", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "send invite link via email", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> sendEmailInvite(Principal principal, @RequestBody SendEmailInviteLinkReq req) {
         var resp = inviteLinkService.sendEmailInvite(principal.getName(), req);
         return new ResponseEntity<>(resp, resp.getHttpStatus());

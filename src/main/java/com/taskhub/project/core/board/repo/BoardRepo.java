@@ -85,7 +85,7 @@ public interface BoardRepo extends JpaRepository<Board, String> {
     @Query(value = """
         select CASE WHEN COUNT(b.id) > 0 THEN 'true' ELSE 'false' END
         from board b
-            join board_card_member bcm on b.id = :boardId
+            join workspace_member bcm on b.id = :boardId
             and bcm.user_id = :userId
     """, nativeQuery = true)
     boolean isBoardMember(String boardId, String userId);

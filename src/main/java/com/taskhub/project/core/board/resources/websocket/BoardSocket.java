@@ -31,7 +31,7 @@ public class BoardSocket {
     private final SimpMessageSendingOperations messageTemplate;
     private final BoardService boardService;
 
-    @Secured(Constants.ActionString.EDIT_BOARD)
+    // @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/createColumn")
     public void createColumn(
             @DestinationVariable String boardId,
@@ -47,7 +47,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
-    @Secured(Constants.ActionString.EDIT_BOARD)
+    // @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/moveColumn")
     public void moveColumn(
             @DestinationVariable String boardId,
@@ -63,7 +63,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
-    @Secured(Constants.ActionString.EDIT_BOARD)
+    // @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/createCard")
     public void createCard(
             @DestinationVariable String boardId,
@@ -79,7 +79,7 @@ public class BoardSocket {
         messageTemplate.convertAndSend("/topic/board/" + boardId, response);
     }
 
-    @Secured(Constants.ActionString.EDIT_BOARD)
+    // @Secured(Constants.ActionString.EDIT_BOARD)
     @MessageMapping("/{boardId}/moveCard")
     public void moveCard(
             @DestinationVariable String boardId,

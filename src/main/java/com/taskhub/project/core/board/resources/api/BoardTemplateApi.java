@@ -20,7 +20,7 @@ public class BoardTemplateApi {
     private final BoardTemplateService service;
 
     @GetMapping("{boardId}")
-    @Operation(summary = "Get all template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "get all template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> getTemplate(@PathVariable String boardId) {
         var response = service.getTemplate(boardId);
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -28,7 +28,7 @@ public class BoardTemplateApi {
 
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/create")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "create new template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> createTemplate(
             @RequestBody BoardCardTemplateCreateRequest request,
             Authentication authentication
@@ -39,7 +39,7 @@ public class BoardTemplateApi {
 
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/delete/{templateId}")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "delete template", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> createTemplate(
             @PathVariable String templateId,
             Authentication authentication
@@ -50,7 +50,7 @@ public class BoardTemplateApi {
 
     // api get template label
     @GetMapping("/labels/{templateId}")
-    @Operation(summary = "Get all template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "get template label", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> getLabel(@PathVariable String templateId) {
         var response = service.getLabel(templateId);
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -59,7 +59,7 @@ public class BoardTemplateApi {
     // api create template label
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/labels/create")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "create new template label", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> createLabel(
             @RequestBody CardLabelCreateReq request,
             Authentication authentication
@@ -71,7 +71,7 @@ public class BoardTemplateApi {
     // api edit template label
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/labels/update")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "edit template label", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> editLabel(
             @RequestBody CardLabelUpdateReq request,
             Authentication authentication
@@ -83,7 +83,7 @@ public class BoardTemplateApi {
     // api delete template label
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/labels/delete")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "delete template label", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> deleteLabel(
             @RequestBody CardLabelDeleteReq request,
             Authentication authentication
@@ -95,7 +95,7 @@ public class BoardTemplateApi {
 
     // api get template custom field
     @GetMapping("/fields/{templateId}")
-    @Operation(summary = "Get all template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get template custom field", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> getFields(@PathVariable String templateId) {
         var response = service.getFields(templateId);
         return new ResponseEntity<>(response, response.getHttpStatus());
@@ -104,7 +104,7 @@ public class BoardTemplateApi {
     // api create template custom field
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/fields/create")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "create template custom field", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> createFields(
             @RequestBody CardCustomFieldCreateReq request,
             Authentication authentication
@@ -116,7 +116,7 @@ public class BoardTemplateApi {
     // api edit template label
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/fields/update")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "edit template custom field", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> editFields(
             @RequestBody CardCustomFieldUpdateReq request,
             Authentication authentication
@@ -128,7 +128,7 @@ public class BoardTemplateApi {
     // api delete template label
     @Secured(Constants.ActionString.EDIT_CARD_TEMPLATE)
     @PostMapping("/fields/delete")
-    @Operation(summary = "Create new template", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "delete template custom field", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<ServiceResult<?>> deleteFields(
             @RequestBody CardCustomFieldDeleteReq request,
             Authentication authentication
